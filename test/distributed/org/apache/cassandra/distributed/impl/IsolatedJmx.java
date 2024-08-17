@@ -20,6 +20,8 @@ package org.apache.cassandra.distributed.impl;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -57,8 +59,8 @@ public class IsolatedJmx
     private JMXServerUtils.JmxRegistry registry;
     private RMIJRMPServerImpl jmxRmiServer;
     private MBeanWrapper.InstanceMBeanWrapper wrapper;
-    private RMIClientSocketFactoryImpl clientSocketFactory;
-    private CollectingRMIServerSocketFactoryImpl serverSocketFactory;
+    private RMIClientSocketFactory clientSocketFactory;
+    private RMIServerSocketFactory serverSocketFactory;
     private Logger inInstancelogger;
     private IInstanceConfig config;
 
@@ -86,12 +88,9 @@ public class IsolatedJmx
             ((MBeanWrapper.DelegatingMbeanWrapper) MBeanWrapper.instance).setDelegate(wrapper);
             Map<String, Object> env = new HashMap<>();
 
-            serverSocketFactory = new CollectingRMIServerSocketFactoryImpl(addr);
-            env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE,
-                    serverSocketFactory);
-            clientSocketFactory = new RMIClientSocketFactoryImpl(addr);
-            env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
-                    clientSocketFactory);
+            Map<String, Object> socketFactories = new IsolatedJMXSocketFactory().configure(addr, true, null);
+            serverSocketFactory = (RMIServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
+            clientSocketFactory = (RMIClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
 
             // configure the RMI registry
             registry = new JMXServerUtils.JmxRegistry(jmxPort,
