@@ -24,7 +24,7 @@ import javax.net.ssl.SSLException;
 
 import org.apache.cassandra.config.EncryptionOptions;
 
-public interface IJMXSocketFactory
+public interface IJmxSocketFactory
 {
     Map<String, Object> configure(InetAddress serverAddress, boolean localOnly, EncryptionOptions jmxEncryptionOptions) throws SSLException;
 }

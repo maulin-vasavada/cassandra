@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.cassandra.distributed.impl;
+package org.apache.cassandra.utils.jmx;
 
 import java.net.InetAddress;
 import java.util.Arrays;
@@ -25,27 +25,23 @@ import java.util.stream.Collectors;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.net.ssl.SSLException;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
+import javax.rmi.ssl.SslRMIServerSocketFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.EncryptionOptions;
-import org.apache.cassandra.utils.RMIClientSocketFactoryImpl;
-import org.apache.cassandra.utils.jmx.AbstractJMXSocketFactory;
+import org.apache.cassandra.utils.JmxSslRMIServerSocketFactory;
+import org.apache.cassandra.utils.RMIServerSocketFactoryImpl;
 
-public class IsolatedJMXSocketFactory extends AbstractJMXSocketFactory
+public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
 {
-    private static final Logger logger = LoggerFactory.getLogger(IsolatedJMXSocketFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultJmxSocketFactory.class);
 
     @Override
     public void configureLocalSocketFactory(Map<String, Object> env, InetAddress serverAddress)
     {
-        CollectingRMIServerSocketFactoryImpl serverSocketFactory = new CollectingRMIServerSocketFactoryImpl(serverAddress);
-        env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE,
-                serverSocketFactory);
-        RMIClientSocketFactoryImpl clientSocketFactory = new RMIClientSocketFactoryImpl(serverAddress);
-        env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
-                clientSocketFactory);
+        env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, new RMIServerSocketFactoryImpl(serverAddress));
     }
 
     @Override
@@ -53,7 +49,6 @@ public class IsolatedJMXSocketFactory extends AbstractJMXSocketFactory
     {
         SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-        //TODO Do we need this for the IsolatedJmx?
         env.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 
@@ -61,10 +56,7 @@ public class IsolatedJMXSocketFactory extends AbstractJMXSocketFactory
     public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
                                              String[] enabledProtocols, boolean needClientAuth)
     {
-        CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl(serverAddress,
-                                                                                                            enabledCipherSuites,
-                                                                                                            enabledProtocols,
-                                                                                                            needClientAuth);
+        SslRMIServerSocketFactory serverFactory = new SslRMIServerSocketFactory(enabledCipherSuites, enabledProtocols, needClientAuth);
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);
         logJmxSslConfig(serverFactory);
     }
@@ -73,18 +65,17 @@ public class IsolatedJMXSocketFactory extends AbstractJMXSocketFactory
     public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
                                              EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
-        CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl
-                                                                (serverAddress, jmxEncryptionOptions);
+        JmxSslRMIServerSocketFactory serverFactory = new JmxSslRMIServerSocketFactory(jmxEncryptionOptions);
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);
         logJmxSslConfig(serverFactory);
     }
 
-    private void logJmxSslConfig(CollectingSslRMIServerSocketFactoryImpl serverFactory)
+    private void logJmxSslConfig(SslRMIServerSocketFactory serverFactory)
     {
         if (logger.isDebugEnabled())
             logger.debug("JMX SSL configuration. { protocols: [{}], cipher_suites: [{}], require_client_auth: {} }",
                          serverFactory.getEnabledProtocols() == null ? "'JVM defaults'" : Arrays.stream(serverFactory.getEnabledProtocols()).collect(Collectors.joining("','", "'", "'")),
                          serverFactory.getEnabledCipherSuites() == null ? "'JVM defaults'" : Arrays.stream(serverFactory.getEnabledCipherSuites()).collect(Collectors.joining("','", "'", "'")),
-                         serverFactory.isNeedClientAuth());
+                         serverFactory.getNeedClientAuth());
     }
 }
