@@ -33,6 +33,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.utils.RMICloseableSocketFactory;
 
 
 /**
@@ -40,7 +41,7 @@ import org.apache.cassandra.config.EncryptionOptions;
  * later close the sockets, which would otherwise be left with a thread running waiting for
  * connections that would never show up as the server was otherwise closed.
  */
-class CollectingSslRMIServerSocketFactoryImpl implements RMIServerSocketFactory
+class CollectingSslRMIServerSocketFactoryImpl implements RMIServerSocketFactory, RMICloseableSocketFactory
 {
     private final InetAddress bindAddress;
     private final String[] enabledCipherSuites;
@@ -124,7 +125,7 @@ class CollectingSslRMIServerSocketFactoryImpl implements RMIServerSocketFactory
         };
     }
 
-
+    @Override
     public void close() throws IOException
     {
         for (ServerSocket socket : sockets)

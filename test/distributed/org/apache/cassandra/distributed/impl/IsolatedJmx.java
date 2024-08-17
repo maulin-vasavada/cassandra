@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
@@ -39,9 +38,9 @@ import org.slf4j.Logger;
 import org.apache.cassandra.distributed.api.IInstance;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.distributed.shared.JMXUtil;
+import org.apache.cassandra.utils.RMICloseableSocketFactory;
 import org.apache.cassandra.utils.JMXServerUtils;
 import org.apache.cassandra.utils.MBeanWrapper;
-import org.apache.cassandra.utils.RMIClientSocketFactoryImpl;
 import sun.rmi.transport.tcp.TCPEndpoint;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVA_RMI_DGC_LEASE_VALUE_IN_JVM_DTEST;
@@ -88,7 +87,7 @@ public class IsolatedJmx
             ((MBeanWrapper.DelegatingMbeanWrapper) MBeanWrapper.instance).setDelegate(wrapper);
             Map<String, Object> env = new HashMap<>();
 
-            Map<String, Object> socketFactories = new IsolatedJMXSocketFactory().configure(addr, true, null);
+            Map<String, Object> socketFactories = new IsolatedJmxSocketFactory().configure(addr, true, null);
             serverSocketFactory = (RMIServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
             clientSocketFactory = (RMIClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
 
@@ -184,7 +183,7 @@ public class IsolatedJmx
         }
         try
         {
-            clientSocketFactory.close();
+            ((RMICloseableSocketFactory)clientSocketFactory).close();
         }
         catch (Throwable e)
         {
@@ -192,7 +191,7 @@ public class IsolatedJmx
         }
         try
         {
-            serverSocketFactory.close();
+            ((RMICloseableSocketFactory)serverSocketFactory).close();
         }
         catch (Throwable e)
         {

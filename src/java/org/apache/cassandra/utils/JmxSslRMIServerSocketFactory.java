@@ -29,9 +29,9 @@ import org.apache.cassandra.config.EncryptionOptions;
  *
  * @see javax.rmi.ssl.SslRMIServerSocketFactory
  */
-public class JMXSslRMIServerSocketFactory extends SslRMIServerSocketFactory
+public class JmxSslRMIServerSocketFactory extends SslRMIServerSocketFactory
 {
-    public JMXSslRMIServerSocketFactory(EncryptionOptions jmxEncryptionOptions) throws SSLException
+    public JmxSslRMIServerSocketFactory(EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
         super(jmxEncryptionOptions.sslContextFactoryInstance.createJSSESslContext(jmxEncryptionOptions.getClientAuth()),
               jmxEncryptionOptions.cipherSuitesArray(),

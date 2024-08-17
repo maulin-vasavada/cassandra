@@ -36,9 +36,9 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MA
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES;
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS;
 
-abstract public class AbstractJMXSocketFactory implements IJMXSocketFactory
+abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
 {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractJMXSocketFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractJmxSocketFactory.class);
 
     @Override
     public Map<String, Object> configure(InetAddress serverAddress, boolean localOnly,
