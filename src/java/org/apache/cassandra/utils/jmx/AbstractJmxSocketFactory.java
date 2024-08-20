@@ -103,7 +103,13 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
     void setJmxSystemProperties(EncryptionOptions jmxEncryptionOptions)
     {
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);
-        JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.setString(StringUtils.join(jmxEncryptionOptions.getAcceptedProtocols(), ","));
-        JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.setString(StringUtils.join(jmxEncryptionOptions.cipherSuitesArray(), ","));
+        if (jmxEncryptionOptions.getAcceptedProtocols() != null)
+        {
+            JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.setString(StringUtils.join(jmxEncryptionOptions.getAcceptedProtocols(), ","));
+        }
+        if (jmxEncryptionOptions.cipherSuitesArray() != null)
+        {
+            JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.setString(StringUtils.join(jmxEncryptionOptions.cipherSuitesArray(), ","));
+        }
     }
 }

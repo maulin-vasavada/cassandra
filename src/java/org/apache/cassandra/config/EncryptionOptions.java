@@ -173,7 +173,7 @@ public class EncryptionOptions
             this.keyName=keyName;
         }
 
-        String getKeyName()
+        public String getKeyName()
         {
             return keyName;
         }
