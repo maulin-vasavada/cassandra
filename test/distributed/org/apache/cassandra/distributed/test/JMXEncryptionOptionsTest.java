@@ -20,41 +20,25 @@ package org.apache.cassandra.distributed.test;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.rmi.server.RMIClientSocketFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringTokenizer;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-import javax.management.remote.rmi.RMIConnectorServer;
 import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocket;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
-import javax.rmi.ssl.SslRMIServerSocketFactory;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.Feature;
-import org.apache.cassandra.distributed.shared.JMXUtil;
-import org.apache.cassandra.distributed.shared.WithProperties;
 import org.apache.cassandra.distributed.test.jmx.JMXGetterCheckTest;
 import org.apache.cassandra.transport.TlsTestUtils;
-import org.apache.cassandra.utils.JMXServerUtils;
 
-import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_CONFIG;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS;
@@ -64,21 +48,6 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_
 
 public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
 {
-    static WithProperties properties;
-
-    @BeforeClass
-    public static void setupDatabaseDescriptor()
-    {
-        properties = new WithProperties().set(CASSANDRA_CONFIG, "cassandra-jmx-sslconfig.yaml");
-        DatabaseDescriptor.daemonInitialization();
-    }
-
-    @AfterClass
-    public static void tearDownDatabaseDescriptor()
-    {
-        properties.close();
-    }
-
     @After
     public void resetJmxSslSystemProperties()
     {
@@ -93,17 +62,20 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testDefaultSettings() throws Throwable
     {
-        InetAddress serverAddress = InetAddress.getLoopbackAddress();
-        int port = 7199;
-        JMXServerUtils.createJMXServer(port, serverAddress.getHostName(), false);
-        String url = JMXServerUtils.getJmxServiceUrl(serverAddress, port);
-        logger.info("Client using JMX url: {}", url);
-        Map<String, Object> jmxEnv = new HashMap<>();
-        try (JMXConnector jmxc = JMXConnectorFactory.connect(new JMXServiceURL(url), jmxEnv);)
+        System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
+        try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
+            c.with(Feature.JMX);
+            c.set("jmx_encryption_options",
+                  ImmutableMap.builder().putAll(validKeystore)
+                              .put("enabled", true)
+                              .put("require_client_auth", false)
+                              .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
+                              .build());
+        }).start())
         {
-          logger.info("success");
+            // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
+            JMXGetterCheckTest.testAllValidGetters(cluster);
         }
-
     }
 
     @Test

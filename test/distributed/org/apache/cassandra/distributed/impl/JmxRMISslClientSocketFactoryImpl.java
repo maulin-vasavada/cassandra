@@ -42,7 +42,7 @@ public class JmxRMISslClientSocketFactoryImpl implements RMIClientSocketFactory,
                                                          RMICloseableSocketFactory
 {
     private static final long serialVersionUID = 9054380061905145241L;
-    List<Socket> sockets = new ArrayList<>();
+    private static final List<Socket> sockets = new ArrayList<>();
     private final InetAddress localAddress;
 
     public JmxRMISslClientSocketFactoryImpl(InetAddress localAddress)
