@@ -37,10 +37,8 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.management.remote.JMXAuthenticator;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
@@ -48,19 +46,16 @@ import javax.management.remote.MBeanServerForwarder;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
 import javax.net.ssl.SSLException;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
-import javax.rmi.ssl.SslRMIServerSocketFactory;
 import javax.security.auth.Subject;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.jmx.AuthenticationProxy;
 import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.utils.jmx.DefaultJmxSocketFactory;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_JMX_AUTHORIZER;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_JMX_REMOTE_LOGIN_CONFIG;
@@ -68,12 +63,6 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MA
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_AUTHENTICATE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_PASSWORD_FILE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_RMI_PORT;
-import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
-import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES;
-import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS;
-import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH;
-import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES;
-import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS;
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVA_RMI_SERVER_HOSTNAME;
 
 public class JMXServerUtils
@@ -228,56 +217,17 @@ public class JMXServerUtils
     @VisibleForTesting
     static Map<String, Object> configureJmxSocketFactories(InetAddress serverAddress, boolean localOnly) throws SSLException
     {
-        Map<String, Object> env = new HashMap<>();
-        EncryptionOptions jmxEncryptionOptions = DatabaseDescriptor.getJmxEncryptionOptions();
-        if (COM_SUN_MANAGEMENT_JMXREMOTE_SSL.getBoolean())
-        {
-            logger.info("Enabling JMX SSL using environment file properties");
-            logger.warn("Consider using the jmx_encryption_options section of cassandra.yaml instead to prevent " +
-                        "sensitive information being exposed");
-            boolean requireClientAuth = COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.getBoolean();
-            String[] protocols = null;
-            String protocolList = COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.getString();
-            if (protocolList != null)
-            {
-                JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.setString(protocolList);
-                protocols = StringUtils.split(protocolList, ',');
-            }
-
-            String[] ciphers = null;
-            String cipherList = COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.getString();
-            if (cipherList != null)
-            {
-                JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.setString(cipherList);
-                ciphers = StringUtils.split(cipherList, ',');
-            }
-
-            SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
-            SslRMIServerSocketFactory serverFactory = new SslRMIServerSocketFactory(ciphers, protocols, requireClientAuth);
-            setSocketFactoriesInEnv(env, clientFactory, serverFactory);
-        }
-        else if (jmxEncryptionOptions != null && jmxEncryptionOptions.getEnabled() != null && jmxEncryptionOptions.getEnabled())
-        {
-            logger.info("Enabling JMX SSL using jmx_encryption_options from cassandra.yaml");
-            // Here we can continue to use the SslRMIClientSocketFactory for client sockets.
-            // However, we should still set System properties for cipher_suites and enabled_protocols
-            // to have the same behavior as cassandra-env.sh based JMX SSL settings
-            setJmxSystemProperties(jmxEncryptionOptions);
-            SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
-            JMXSslRMIServerSocketFactory serverFactory = new JMXSslRMIServerSocketFactory(jmxEncryptionOptions);
-            setSocketFactoriesInEnv(env, clientFactory, serverFactory);
-        }
-        else if (localOnly)
-        {
-            env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE,
-                    new RMIServerSocketFactoryImpl(serverAddress));
-        }
-
-        return env;
+        return new DefaultJmxSocketFactory().configure(serverAddress, localOnly, DatabaseDescriptor.getJmxEncryptionOptions());
     }
 
     @VisibleForTesting
     public static void logJmxServiceUrl(InetAddress serverAddress, int port)
+    {
+        logger.info("Configured JMX server at: {}", getJmxServiceUrl(serverAddress, port));
+    }
+
+    @VisibleForTesting
+    public static String getJmxServiceUrl(InetAddress serverAddress, int port)
     {
         String urlTemplate = "service:jmx:rmi://%1$s/jndi/rmi://%1$s:%2$d/jmxrmi";
         String hostName;
@@ -292,37 +242,7 @@ public class JMXServerUtils
                        ? '[' + serverAddress.getHostAddress() + ']'
                        : serverAddress.getHostAddress();
         }
-        String url = String.format(urlTemplate, hostName, port);
-        logger.info("Configured JMX server at: {}", url);
-    }
-
-    private static void setSocketFactoriesInEnv(Map<String, Object> env, RMIClientSocketFactory clientFactory,
-                                                SslRMIServerSocketFactory serverFactory)
-    {
-        env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);
-        env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-        env.put("com.sun.jndi.rmi.factory.socket", clientFactory);
-        logJmxSslConfig(serverFactory);
-    }
-
-    private static void logJmxSslConfig(SslRMIServerSocketFactory serverFactory)
-    {
-        if (logger.isDebugEnabled())
-            logger.debug("JMX SSL configuration. { protocols: [{}], cipher_suites: [{}], require_client_auth: {} }",
-                         serverFactory.getEnabledProtocols() == null
-                         ? "'JVM defaults'"
-                         : Arrays.stream(serverFactory.getEnabledProtocols()).collect(Collectors.joining("','", "'", "'")),
-                         serverFactory.getEnabledCipherSuites() == null
-                         ? "'JVM defaults'"
-                         : Arrays.stream(serverFactory.getEnabledCipherSuites()).collect(Collectors.joining("','", "'", "'")),
-                         serverFactory.getNeedClientAuth());
-    }
-
-    private static void setJmxSystemProperties(EncryptionOptions jmxEncryptionOptions)
-    {
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);
-        JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.setString(StringUtils.join(jmxEncryptionOptions.getAcceptedProtocols(), ","));
-        JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.setString(StringUtils.join(jmxEncryptionOptions.cipherSuitesArray(), ","));
+        return String.format(urlTemplate, hostName, port);
     }
     
     private static class JMXPluggableAuthenticatorWrapper implements JMXAuthenticator

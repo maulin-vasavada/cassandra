@@ -16,26 +16,15 @@
  * limitations under the License.
  */
 
-package org.apache.cassandra.utils;
+package org.apache.cassandra.utils.jmx;
 
+import java.net.InetAddress;
+import java.util.Map;
 import javax.net.ssl.SSLException;
-import javax.rmi.ssl.SslRMIServerSocketFactory;
 
 import org.apache.cassandra.config.EncryptionOptions;
 
-/**
- * This class extends {@code SslRMIServerSocketFactory} to use {@code jmx_encryption_options}, configured via
- * cassandra.yaml, for creating the JMX server socket.
- *
- * @see javax.rmi.ssl.SslRMIServerSocketFactory
- */
-public class JMXSslRMIServerSocketFactory extends SslRMIServerSocketFactory
+public interface IJmxSocketFactory
 {
-    public JMXSslRMIServerSocketFactory(EncryptionOptions jmxEncryptionOptions) throws SSLException
-    {
-        super(jmxEncryptionOptions.sslContextFactoryInstance.createJSSESslContext(jmxEncryptionOptions.getClientAuth()),
-              jmxEncryptionOptions.cipherSuitesArray(),
-              jmxEncryptionOptions.acceptedProtocolsArray(),
-              jmxEncryptionOptions.getClientAuth() == EncryptionOptions.ClientAuth.REQUIRED);
-    }
+    Map<String, Object> configure(InetAddress serverAddress, boolean localOnly, EncryptionOptions jmxEncryptionOptions) throws SSLException;
 }

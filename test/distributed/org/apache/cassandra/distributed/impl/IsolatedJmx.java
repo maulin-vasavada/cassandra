@@ -20,11 +20,13 @@ package org.apache.cassandra.distributed.impl;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
@@ -34,12 +36,13 @@ import javax.management.remote.rmi.RMIJRMPServerImpl;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 
+import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.distributed.api.IInstance;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.distributed.shared.JMXUtil;
 import org.apache.cassandra.utils.JMXServerUtils;
 import org.apache.cassandra.utils.MBeanWrapper;
-import org.apache.cassandra.utils.RMIClientSocketFactoryImpl;
+import org.apache.cassandra.utils.RMICloseableSocketFactory;
 import sun.rmi.transport.tcp.TCPEndpoint;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVA_RMI_DGC_LEASE_VALUE_IN_JVM_DTEST;
@@ -57,8 +60,8 @@ public class IsolatedJmx
     private JMXServerUtils.JmxRegistry registry;
     private RMIJRMPServerImpl jmxRmiServer;
     private MBeanWrapper.InstanceMBeanWrapper wrapper;
-    private RMIClientSocketFactoryImpl clientSocketFactory;
-    private CollectingRMIServerSocketFactoryImpl serverSocketFactory;
+    private RMIClientSocketFactory clientSocketFactory;
+    private RMIServerSocketFactory serverSocketFactory;
     private Logger inInstancelogger;
     private IInstanceConfig config;
 
@@ -86,12 +89,11 @@ public class IsolatedJmx
             ((MBeanWrapper.DelegatingMbeanWrapper) MBeanWrapper.instance).setDelegate(wrapper);
             Map<String, Object> env = new HashMap<>();
 
-            serverSocketFactory = new CollectingRMIServerSocketFactoryImpl(addr);
-            env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE,
-                    serverSocketFactory);
-            clientSocketFactory = new RMIClientSocketFactoryImpl(addr);
-            env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE,
-                    clientSocketFactory);
+            EncryptionOptions jmxEncryptionOptions = getJmxEncryptionOptions();
+            Map<String, Object> socketFactories = new IsolatedJmxSocketFactory().configure(addr, true, jmxEncryptionOptions);
+            serverSocketFactory = (RMIServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
+            clientSocketFactory = (RMIClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
+            env.putAll(socketFactories);
 
             // configure the RMI registry
             registry = new JMXServerUtils.JmxRegistry(jmxPort,
@@ -137,9 +139,46 @@ public class IsolatedJmx
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private EncryptionOptions getJmxEncryptionOptions()
+    {
+        Map<String,Object> encryptionOptionsMap = (Map<String, Object>) config.getParams().get("jmx_encryption_options");
+
+        if (encryptionOptionsMap != null)
+        {
+            EncryptionOptions jmxEncryptionOptions = new EncryptionOptions();
+            String[] cipherSuitesArray = (String[])encryptionOptionsMap.get(EncryptionOptions.ConfigKey.CIPHER_SUITES.getKeyName());
+            if (cipherSuitesArray != null )
+            {
+                jmxEncryptionOptions = jmxEncryptionOptions.withCipherSuites(cipherSuitesArray);
+            }
+            List<String> acceptedProtocols = (List<String>)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ACCEPTED_PROTOCOLS.getKeyName());
+            if (acceptedProtocols != null )
+            {
+                jmxEncryptionOptions = jmxEncryptionOptions.withAcceptedProtocols(acceptedProtocols);
+            }
+            EncryptionOptions.ClientAuth requireClientAuth = EncryptionOptions.ClientAuth.from(String.valueOf(encryptionOptionsMap.get(EncryptionOptions.ConfigKey.REQUIRE_CLIENT_AUTH.getKeyName())));
+            Object enabledOption = encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.getKeyName());
+            boolean enabled = enabledOption != null ? (Boolean)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.getKeyName()) : false;
+
+            //TODO populate sslContextFactory also
+            jmxEncryptionOptions = jmxEncryptionOptions
+                   .withKeyStore((String)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE.getKeyName()))
+                   .withKeyStorePassword((String)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE_PASSWORD.getKeyName()))
+                   .withTrustStore((String)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.TRUSTSTORE.getKeyName()))
+                   .withTrustStorePassword((String)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.TRUSTSTORE_PASSWORD.getKeyName()))
+                   .withRequireClientAuth(requireClientAuth)
+                   .withEnabled(enabled);
+            return jmxEncryptionOptions;
+        } else
+        {
+            return null;
+        }
+    }
+
     private void waitForJmxAvailability(Map<String, ?> env)
     {
-        try (JMXConnector ignored = JMXUtil.getJmxConnector(config, 20, env))
+        try (JMXConnector ignored = JMXUtil.getJmxConnector(config, 1, env))
         {
             // Do nothing - JMXUtil now retries
         }
@@ -185,7 +224,7 @@ public class IsolatedJmx
         }
         try
         {
-            clientSocketFactory.close();
+            ((RMICloseableSocketFactory)clientSocketFactory).close();
         }
         catch (Throwable e)
         {
@@ -193,7 +232,7 @@ public class IsolatedJmx
         }
         try
         {
-            serverSocketFactory.close();
+            ((RMICloseableSocketFactory)serverSocketFactory).close();
         }
         catch (Throwable e)
         {
