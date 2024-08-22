@@ -25,9 +25,11 @@ import java.rmi.server.RMIClientSocketFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.management.remote.rmi.RMIConnectorServer;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocket;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
@@ -73,8 +75,12 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
                               .build());
         }).start())
         {
+            SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
+            Map<String,Object> jmxEnv = new HashMap<>();
+            jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
+            jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
             // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
-            JMXGetterCheckTest.testAllValidGetters(cluster);
+            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
         }
     }
 
