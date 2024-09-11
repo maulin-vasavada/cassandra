@@ -31,6 +31,7 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.utils.RMICloseableSocketFactory;
 
 /**
@@ -68,8 +69,9 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
                                     sslSocketFactory.createSocket(localAddress, port);
         // Set the SSLSocket Enabled Cipher Suites
         //
+        ;
         final String enabledCipherSuites =
-        System.getProperty("javax.rmi.ssl.client.enabledCipherSuites");
+        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString();
         if (enabledCipherSuites != null) {
             StringTokenizer st = new StringTokenizer(enabledCipherSuites, ",");
             int tokens = st.countTokens();
@@ -86,8 +88,7 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
         }
         // Set the SSLSocket Enabled Protocols
         //
-        final String enabledProtocols =
-        System.getProperty("javax.rmi.ssl.client.enabledProtocols");
+        final String enabledProtocols = CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString();
         if (enabledProtocols != null) {
             StringTokenizer st = new StringTokenizer(enabledProtocols, ",");
             int tokens = st.countTokens();
