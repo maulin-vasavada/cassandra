@@ -74,7 +74,7 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testDefaultSettings() throws Throwable
     {
-        //System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
+        System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
         ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
                                                                         .put("enabled", true)
                                                                         .put("require_client_auth", false)
