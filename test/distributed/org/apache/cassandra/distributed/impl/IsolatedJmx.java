@@ -32,6 +32,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
+import javax.net.ssl.SSLException;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
@@ -70,6 +71,7 @@ public class IsolatedJmx
         this.inInstancelogger = inInstanceLogger;
     }
 
+    @SuppressWarnings("unchecked")
     public void startJmx() {
         try
         {
@@ -89,7 +91,8 @@ public class IsolatedJmx
             ((MBeanWrapper.DelegatingMbeanWrapper) MBeanWrapper.instance).setDelegate(wrapper);
             Map<String, Object> env = new HashMap<>();
 
-            EncryptionOptions jmxEncryptionOptions = getJmxEncryptionOptions();
+            Map<String,Object> encryptionOptionsMap = (Map<String, Object>) config.getParams().get("jmx_encryption_options");
+            EncryptionOptions jmxEncryptionOptions = getJmxEncryptionOptions(encryptionOptionsMap);
             Map<String, Object> socketFactories = new IsolatedJmxSocketFactory().configure(addr, true, jmxEncryptionOptions);
             serverSocketFactory = (RMIServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
             clientSocketFactory = (RMIClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
@@ -131,7 +134,12 @@ public class IsolatedJmx
 
             registry.setRemoteServerStub(jmxRmiServer.toStub());
             JMXServerUtils.logJmxServiceUrl(addr, jmxPort);
-            waitForJmxAvailability(env);
+
+            // Prepare JMX Env for the JMX Client
+            Map<String, Object> clientJmxEnv = new HashMap<>();
+            //clientJmxEnv.putAll(env);
+            configureClientSocketFactory(clientJmxEnv, encryptionOptionsMap);
+            waitForJmxAvailability(clientJmxEnv);
         }
         catch (Throwable t)
         {
@@ -140,10 +148,22 @@ public class IsolatedJmx
     }
 
     @SuppressWarnings("unchecked")
-    private EncryptionOptions getJmxEncryptionOptions()
+    private void configureClientSocketFactory(Map<String, Object> jmxEnv, Map<String, Object> encryptionOptionsMap) throws SSLException
     {
-        Map<String,Object> encryptionOptionsMap = (Map<String, Object>) config.getParams().get("jmx_encryption_options");
+        IsolatedJmxTestClientSslContextFactory clientSslContextFactory = new IsolatedJmxTestClientSslContextFactory(encryptionOptionsMap);
+        List<String> cipherSuitesList = (List<String>) encryptionOptionsMap.get("cipher_suites");
+        String[] cipherSuites = cipherSuitesList == null ? null : cipherSuitesList.toArray(new String[0]);
+        List<String> acceptedProtocolList = (List<String>) encryptionOptionsMap.get("accepted_protocols");
+        String[] acceptedProtocols = acceptedProtocolList == null ? null : acceptedProtocolList.toArray(new String[0]);
+        IsolatedJmxTestClientSslSocketFactory clientFactory = new IsolatedJmxTestClientSslSocketFactory(clientSslContextFactory.createSSLContext(),
+                                                                                                        cipherSuites, acceptedProtocols);
+        jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
+        jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
+    }
 
+    @SuppressWarnings("unchecked")
+    private EncryptionOptions getJmxEncryptionOptions(Map<String,Object> encryptionOptionsMap)
+    {
         if (encryptionOptionsMap != null)
         {
             EncryptionOptions jmxEncryptionOptions = new EncryptionOptions();

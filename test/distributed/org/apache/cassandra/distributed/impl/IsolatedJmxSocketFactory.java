@@ -50,7 +50,7 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     @Override
     public void configureClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
     {
-        JmxRMISslClientSocketFactoryImpl clientFactory = new JmxRMISslClientSocketFactoryImpl(serverAddress);
+        RMISslClientSocketFactoryImpl clientFactory = new RMISslClientSocketFactoryImpl(serverAddress);
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
         //TODO Do we need this for the IsolatedJmx?
         env.put("com.sun.jndi.rmi.factory.socket", clientFactory);

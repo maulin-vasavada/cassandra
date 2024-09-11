@@ -38,14 +38,14 @@ import org.apache.cassandra.utils.RMICloseableSocketFactory;
  * which can otherwise be influenced by the system property "java.rmi.server.hostname" in strange and
  * unpredictable ways.
  */
-public class JmxRMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Serializable,
-                                                         RMICloseableSocketFactory
+public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Serializable,
+                                                      RMICloseableSocketFactory
 {
     private static final long serialVersionUID = 9054380061905145241L;
     private static final List<Socket> sockets = new ArrayList<>();
     private final InetAddress localAddress;
 
-    public JmxRMISslClientSocketFactoryImpl(InetAddress localAddress)
+    public RMISslClientSocketFactoryImpl(InetAddress localAddress)
     {
         this.localAddress = localAddress;
     }
@@ -128,7 +128,7 @@ public class JmxRMISslClientSocketFactoryImpl implements RMIClientSocketFactory,
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        JmxRMISslClientSocketFactoryImpl that = (JmxRMISslClientSocketFactoryImpl) o;
+        RMISslClientSocketFactoryImpl that = (RMISslClientSocketFactoryImpl) o;
         return Objects.equals(localAddress, that.localAddress);
     }
 
