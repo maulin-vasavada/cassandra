@@ -32,7 +32,6 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
-import javax.net.ssl.SSLException;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
@@ -134,31 +133,12 @@ public class IsolatedJmx
 
             registry.setRemoteServerStub(jmxRmiServer.toStub());
             JMXServerUtils.logJmxServiceUrl(addr, jmxPort);
-
-            // Prepare JMX Env for the JMX Client
-            Map<String, Object> clientJmxEnv = new HashMap<>();
-            //clientJmxEnv.putAll(env);
-            configureClientSocketFactory(clientJmxEnv, encryptionOptionsMap);
-            waitForJmxAvailability(clientJmxEnv);
+            waitForJmxAvailability(env);
         }
         catch (Throwable t)
         {
             throw new RuntimeException("Feature.JMX was enabled but could not be started.", t);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void configureClientSocketFactory(Map<String, Object> jmxEnv, Map<String, Object> encryptionOptionsMap) throws SSLException
-    {
-        IsolatedJmxTestClientSslContextFactory clientSslContextFactory = new IsolatedJmxTestClientSslContextFactory(encryptionOptionsMap);
-        List<String> cipherSuitesList = (List<String>) encryptionOptionsMap.get("cipher_suites");
-        String[] cipherSuites = cipherSuitesList == null ? null : cipherSuitesList.toArray(new String[0]);
-        List<String> acceptedProtocolList = (List<String>) encryptionOptionsMap.get("accepted_protocols");
-        String[] acceptedProtocols = acceptedProtocolList == null ? null : acceptedProtocolList.toArray(new String[0]);
-        IsolatedJmxTestClientSslSocketFactory clientFactory = new IsolatedJmxTestClientSslSocketFactory(clientSslContextFactory.createSSLContext(),
-                                                                                                        cipherSuites, acceptedProtocols);
-        jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-        jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 
     @SuppressWarnings("unchecked")
