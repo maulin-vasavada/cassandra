@@ -29,13 +29,11 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Test;
 
-import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.impl.IsolatedJmxTestClientSslContextFactory;
 import org.apache.cassandra.distributed.impl.IsolatedJmxTestClientSslSocketFactory;
 import org.apache.cassandra.distributed.test.jmx.JMXGetterCheckTest;
-import org.apache.cassandra.transport.TlsTestUtils;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES;
@@ -75,6 +73,7 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     public void testDefaultSettings() throws Throwable
     {
         System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
+        System.setProperty("javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"));
         ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
                                                                         .put("enabled", true)
                                                                         .put("require_client_auth", false)
@@ -94,19 +93,28 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     }
 
     @Test
-    public void testPEMBasedEncryptionOptions() throws Throwable
+    public void testClientAuth() throws Throwable
     {
+        System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
+        System.setProperty("javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"));
+        System.setProperty("javax.net.ssl.keyStore", (String)validKeystore.get("keystore"));
+        System.setProperty("javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"));
+
+        ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
+                                                                        .put("enabled", true)
+                                                                        .put("require_client_auth", true)
+                                                                        .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
+                                                                        .build();
+
         try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
             c.with(Feature.JMX);
-            c.set("jmx_encryption_options",
-                  ImmutableMap.builder().putAll(validPEMKeystore)
-                              .put("enabled", true)
-                              .put("require_client_auth", false)
-                              .build());
+            c.set("jmx_encryption_options", encryptionOptionsMap);
         }).start())
         {
+            Map<String, Object> jmxEnv = new HashMap<>();
+            configureClientSocketFactory(jmxEnv, encryptionOptionsMap);
             // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
-            JMXGetterCheckTest.testAllValidGetters(cluster);
+            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
         }
     }
 
@@ -146,39 +154,6 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
         {
             // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
             JMXGetterCheckTest.testAllValidGetters(cluster);
-        }
-    }
-
-    @Test
-    public void testClientAuth() throws Throwable
-    {
-        try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX);
-            c.set("jmx_encryption_options",
-                  ImmutableMap.builder().putAll(validKeystore)
-                              .put("enabled", true)
-                              .put("require_client_auth", true)
-                              .build());
-        }).start())
-        {
-            Map<String, Object> jmxEnv = new HashMap<>();
-
-            String[] enabledProtocols = new String[]{ "TLSv1.2", "TLSv1.1" };
-            String[] cipherSuites = new String[]{ "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256" };
-
-            EncryptionOptions jmxClientEncryptionOptions = new EncryptionOptions()
-                                                           .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
-                                                           .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                                           .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
-                                                           .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
-                                                           .withCipherSuites(cipherSuites)
-                                                           .withAcceptedProtocols(Arrays.asList(enabledProtocols))
-                                                           .withEnabled(true);
-            IsolatedJmxTestClientSslSocketFactory clientFactory = null;
-            //jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-            //jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
-            // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
-            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
         }
     }
 }

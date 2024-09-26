@@ -41,8 +41,8 @@ import org.apache.cassandra.io.util.File;
 public class IsolatedJmxTestClientSslContextFactory
 {
     protected final Map<String, Object> parameters;
-    protected final String keystore;
-    protected final String keystore_password;
+    protected String keystore;
+    protected String keystore_password;
     protected final String truststore;
     protected final String truststore_password;
     protected final String protocol;
@@ -108,19 +108,27 @@ public class IsolatedJmxTestClientSslContextFactory
 
     protected KeyManagerFactory buildKeyManagerFactory() throws SSLException
     {
-        try (InputStream ksf = Files.newInputStream(File.getPath(keystore)))
+        final String algorithm = this.algorithm == null ? KeyManagerFactory.getDefaultAlgorithm() : this.algorithm;
+
+        if (keystore != null)
         {
-            final String algorithm = this.algorithm == null ? KeyManagerFactory.getDefaultAlgorithm() : this.algorithm;
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);
-            KeyStore ks = KeyStore.getInstance(store_type);
-            final char[] password = keystore_password.toCharArray();
-            ks.load(ksf, password);
-            kmf.init(ks, password);
-            return kmf;
+            try (InputStream ksf = Files.newInputStream(File.getPath(keystore)))
+            {
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);
+                KeyStore ks = KeyStore.getInstance(store_type);
+                final char[] password = keystore_password.toCharArray();
+                ks.load(ksf, password);
+                kmf.init(ks, password);
+                return kmf;
+            }
+            catch (Exception e)
+            {
+                throw new SSLException("failed to build key manager store for secure connections", e);
+            }
         }
-        catch (Exception e)
+        else
         {
-            throw new SSLException("failed to build key manager store for secure connections", e);
+            return null;
         }
     }
 
@@ -131,7 +139,7 @@ public class IsolatedJmxTestClientSslContextFactory
         try
         {
             SSLContext ctx = SSLContext.getInstance(protocol);
-            ctx.init(kmf.getKeyManagers(), trustManagers, null);
+            ctx.init(kmf != null ? kmf.getKeyManagers() : null, trustManagers, null);
             return ctx;
         }
         catch (Exception e)
