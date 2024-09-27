@@ -33,6 +33,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.utils.RMICloseableSocketFactory;
 
 
@@ -51,10 +52,16 @@ class CollectingSslRMIServerSocketFactoryImpl implements RMIServerSocketFactory,
     List<ServerSocket> sockets = new ArrayList<>();
 
     public CollectingSslRMIServerSocketFactoryImpl(InetAddress bindAddress, EncryptionOptions jmxEncryptionOptions)
-    throws SSLException
     {
         this.bindAddress = bindAddress;
-        this.sslContext = jmxEncryptionOptions.sslContextFactoryInstance.createJSSESslContext(jmxEncryptionOptions.getClientAuth());
+        try
+        {
+            this.sslContext = jmxEncryptionOptions.sslContextFactoryInstance.createJSSESslContext(jmxEncryptionOptions.getClientAuth());
+        }
+        catch (SSLException e)
+        {
+            throw new ConfigurationException("Failed to create SSLContext for the RMIServerSocketFactory",e);
+        }
         this.enabledCipherSuites = jmxEncryptionOptions.cipherSuitesArray();
         this.enabledProtocols = jmxEncryptionOptions.acceptedProtocolsArray();
         this.needClientAuth = jmxEncryptionOptions.getClientAuth() == EncryptionOptions.ClientAuth.REQUIRED;

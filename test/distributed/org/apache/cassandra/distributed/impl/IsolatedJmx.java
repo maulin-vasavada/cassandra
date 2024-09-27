@@ -157,7 +157,11 @@ public class IsolatedJmx
             {
                 jmxEncryptionOptions = jmxEncryptionOptions.withAcceptedProtocols(acceptedProtocols);
             }
-            EncryptionOptions.ClientAuth requireClientAuth = EncryptionOptions.ClientAuth.from(String.valueOf(encryptionOptionsMap.get(EncryptionOptions.ConfigKey.REQUIRE_CLIENT_AUTH.getKeyName())));
+
+            Boolean requireClientAuthValue = (Boolean) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.REQUIRE_CLIENT_AUTH.getKeyName());
+            EncryptionOptions.ClientAuth requireClientAuth = requireClientAuthValue == null ?
+                                                             EncryptionOptions.ClientAuth.NOT_REQUIRED :
+                                                             EncryptionOptions.ClientAuth.from(String.valueOf(requireClientAuthValue));
             Object enabledOption = encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.getKeyName());
             boolean enabled = enabledOption != null ? (Boolean)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.getKeyName()) : false;
 

@@ -24,9 +24,11 @@ import java.util.List;
 import java.util.Map;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.net.ssl.SSLException;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.cassandra.distributed.Cluster;
@@ -34,6 +36,7 @@ import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.impl.IsolatedJmxTestClientSslContextFactory;
 import org.apache.cassandra.distributed.impl.IsolatedJmxTestClientSslSocketFactory;
 import org.apache.cassandra.distributed.test.jmx.JMXGetterCheckTest;
+import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES;
@@ -53,6 +56,9 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.reset();
         JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.reset();
         JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.reset();
+
+        setSystemTrustStore("", "");
+        setSystemKeyStore("", "");
     }
 
     @SuppressWarnings("unchecked")
@@ -72,11 +78,9 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testDefaultSettings() throws Throwable
     {
-        System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
-        System.setProperty("javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"));
+        setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
         ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
                                                                         .put("enabled", true)
-                                                                        .put("require_client_auth", false)
                                                                         .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
                                                                         .build();
 
@@ -95,11 +99,8 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testClientAuth() throws Throwable
     {
-        System.setProperty("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"));
-        System.setProperty("javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"));
-        System.setProperty("javax.net.ssl.keyStore", (String)validKeystore.get("keystore"));
-        System.setProperty("javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"));
-
+        setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
+        setSystemKeyStore((String)validKeystore.get("keystore"), (String)validKeystore.get("keystore_password"));
         ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
                                                                         .put("enabled", true)
                                                                         .put("require_client_auth", true)
@@ -119,19 +120,44 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     }
 
     @Test
-    public void testInvalidKeystorePath() throws Throwable
+    public void testSystemSettings() throws Throwable
     {
+        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);
+        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.setBoolean(false);
+        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.setString("TLSv1.2,TLSv1.3,TLSv1.1");
+        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.reset();
+        setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
+        setSystemKeyStore((String)validKeystore.get("keystore"), (String)validKeystore.get("keystore_password"));
+
         try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
             c.with(Feature.JMX);
-            c.set("jmx_encryption_options",
-                  ImmutableMap.builder()
-                              .put("enabled", true)
-                              .put("keystore", "/path/to/bad/keystore/that/should/not/exist")
-                              .put("keystore_password", "cassandra")
-                              .build());
+        }).start())
+        {
+            Map<String, Object> jmxEnv = new HashMap<>();
+            SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
+            jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
+            jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
+            // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
+            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+        }
+    }
+
+    @Test
+    public void testInvalidKeystorePath() throws Throwable
+    {
+        ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder()
+                                                                        .put("enabled", true)
+                                                                        .put("keystore", "/path/to/bad/keystore/that/should/not/exist")
+                                                                        .put("keystore_password", "cassandra")
+                                                                        .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
+                                                                        .build();
+
+        try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
+            c.with(Feature.JMX);
+            c.set("jmx_encryption_options", encryptionOptionsMap);
         }).createWithoutStarting())
         {
-            assertCannotStartDueToConfigurationException(cluster);
+            assertCannotStartDueToConfigurationExceptionCause(cluster);
         }
     }
 
@@ -154,6 +180,41 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
         {
             // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
             JMXGetterCheckTest.testAllValidGetters(cluster);
+        }
+    }
+
+    void setSystemTrustStore(String trustStore, String trustStorePassword)
+    {
+        System.setProperty("javax.net.ssl.trustStore", trustStore);
+        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+    }
+
+    void setSystemKeyStore(String keyStore, String keyStorePassword)
+    {
+        System.setProperty("javax.net.ssl.keyStore", keyStore);
+        System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+    }
+
+    /* Provde the cluster cannot start with the configured options */
+    void assertCannotStartDueToConfigurationExceptionCause(Cluster cluster)
+    {
+        Throwable tr = null;
+        try
+        {
+            cluster.startup();
+        }
+        catch (Throwable maybeConfigException)
+        {
+            tr = maybeConfigException;
+        }
+
+        if (tr == null || tr.getCause() == null)
+        {
+            Assert.fail("Expected a ConfigurationException");
+        }
+        else
+        {
+            Assert.assertEquals(ConfigurationException.class.getName(), tr.getCause().getClass().getName());
         }
     }
 }
