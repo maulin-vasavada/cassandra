@@ -36,6 +36,13 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MA
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES;
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS;
 
+/**
+ * Abstracts out the most common workflow in setting up the SSL client and server socket factorires for JMX.
+ * First, it checks the system properties (see <a href="https://docs.oracle.com/en/java/javase/17/management/monitoring-and-management-using-jmx-technology.html#GUID-F08985BB-629A-4FBF-A0CB-8762DF7590E0">Java Documentation</a> to read the SSL configuration.
+ * Next, it checks the provided {@code jmxEncryptionOptions} to read the SSL configuration.
+ * If none of them is enabled, it checks the provided {@code localOnly} flag to configure the JMX server socket
+ * factory for the local JMX connection.
+ */
 abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
 {
     private static final Logger logger = LoggerFactory.getLogger(AbstractJmxSocketFactory.class);
@@ -67,16 +74,16 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
                 ciphers = StringUtils.split(cipherList, ',');
             }
 
-            configureClientSocketFactory(env, serverAddress);
-            configureServerSocketFactory(env, serverAddress, ciphers, protocols, requireClientAuth);
+            configureSslClientSocketFactory(env, serverAddress);
+            configureSslServerSocketFactory(env, serverAddress, ciphers, protocols, requireClientAuth);
         }
         else if (jmxEncryptionOptions != null && jmxEncryptionOptions.getEnabled() != null
                  && jmxEncryptionOptions.getEnabled())
         {
             logger.info("Enabling JMX SSL using jmx_encryption_options from cassandra.yaml");
             setJmxSystemProperties(jmxEncryptionOptions);
-            configureClientSocketFactory(env, serverAddress);
-            configureServerSocketFactory(env, serverAddress, jmxEncryptionOptions);
+            configureSslClientSocketFactory(env, serverAddress);
+            configureSslServerSocketFactory(env, serverAddress, jmxEncryptionOptions);
         }
         else if (localOnly)
         {
@@ -86,17 +93,51 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
         return env;
     }
 
+    /**
+     * Configures the non-SSL socket factories for the local JMX.
+     * @param env output param containing the configured socket factories
+     * @param serverAddress the JMX server is bound to
+     */
     abstract public void configureLocalSocketFactory(Map<String, Object> env, InetAddress serverAddress);
 
-    abstract public void configureClientSocketFactory(Map<String, Object> env, InetAddress serverAddress);
+    /**
+     * Configures SSL based client socket factory.
+     * @param env output param containing the configured socket factories
+     * @param serverAddress the JMX server is bound to
+     */
+    abstract public void configureSslClientSocketFactory(Map<String, Object> env, InetAddress serverAddress);
 
-    abstract public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
-                                                      String[] enabledCipherSuites, String[] enabledProtocols,
-                                                      boolean needClientAuth);
+    /**
+     * Configures SSL based server socket factory.
+     * @param env output param containing the configured socket factories
+     * @param serverAddress the JMX server is bound to
+     * @param enabledCipherSuites for the SSL communication
+     * @param enabledProtocols for the SSL communication
+     * @param needClientAuth {@code true} if it requires the client-auth; {@code false} otherwise
+     */
+    abstract public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                         String[] enabledCipherSuites, String[] enabledProtocols,
+                                                         boolean needClientAuth);
 
-    abstract public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
-                                                      EncryptionOptions jmxEncryptionOptions) throws SSLException;
+    /**
+     * Configures SSL based server socket factory.
+     * @param env output param containing the configured socket factories
+     * @param serverAddress the JMX server is bound to
+     * @param jmxEncryptionOptions for the SSL communication
+     * @throws SSLException if fails to configure the SSL based server socket factory
+     */
+    abstract public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                         EncryptionOptions jmxEncryptionOptions) throws SSLException;
 
+    /**
+     * Sets the following JMX system properties.
+     * <pre>
+     *     com.sun.management.jmxremote.ssl=true
+     *     javax.rmi.ssl.client.enabledCipherSuites=<applicable cipher suites provided in the configuration>
+     *     javax.rmi.ssl.client.enabledProtocols=<applicable protocols provided in the configuration>
+     * </pre>
+     * @param jmxEncryptionOptions
+     */
     void setJmxSystemProperties(EncryptionOptions jmxEncryptionOptions)
     {
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);

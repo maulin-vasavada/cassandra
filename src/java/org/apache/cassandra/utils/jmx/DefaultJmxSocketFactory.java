@@ -34,6 +34,9 @@ import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.utils.JmxSslRMIServerSocketFactory;
 import org.apache.cassandra.utils.RMIServerSocketFactoryImpl;
 
+/**
+ * Default implementation of the {@link IJmxSocketFactory}.
+ */
 public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
 {
     private static final Logger logger = LoggerFactory.getLogger(DefaultJmxSocketFactory.class);
@@ -45,7 +48,7 @@ public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
+    public void configureSslClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
     {
         SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
@@ -53,8 +56,8 @@ public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
-                                             String[] enabledProtocols, boolean needClientAuth)
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
+                                                String[] enabledProtocols, boolean needClientAuth)
     {
         SslRMIServerSocketFactory serverFactory = new SslRMIServerSocketFactory(enabledCipherSuites, enabledProtocols, needClientAuth);
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);
@@ -62,8 +65,8 @@ public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
-                                             EncryptionOptions jmxEncryptionOptions) throws SSLException
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
         JmxSslRMIServerSocketFactory serverFactory = new JmxSslRMIServerSocketFactory(jmxEncryptionOptions);
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);
