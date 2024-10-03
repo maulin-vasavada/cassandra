@@ -33,8 +33,8 @@ import org.junit.Test;
 
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.Feature;
-import org.apache.cassandra.distributed.impl.IsolatedJmxTestClientSslContextFactory;
-import org.apache.cassandra.distributed.impl.IsolatedJmxTestClientSslSocketFactory;
+import org.apache.cassandra.distributed.impl.JmxTestClientSslContextFactory;
+import org.apache.cassandra.distributed.impl.JmxTestClientSslSocketFactory;
 import org.apache.cassandra.distributed.test.jmx.JMXGetterCheckTest;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
@@ -45,7 +45,10 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MA
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES;
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS;
 
-public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
+/**
+ * Distributed tests for JMX SSL configuration via the system properties OR the encryption options in the cassandra.yaml.
+ */
+public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
 {
     @After
     public void resetJmxSslSystemProperties()
@@ -64,19 +67,19 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
     @SuppressWarnings("unchecked")
     private void configureClientSocketFactory(Map<String, Object> jmxEnv, Map<String, Object> encryptionOptionsMap) throws SSLException
     {
-        IsolatedJmxTestClientSslContextFactory clientSslContextFactory = new IsolatedJmxTestClientSslContextFactory(encryptionOptionsMap);
+        JmxTestClientSslContextFactory clientSslContextFactory = new JmxTestClientSslContextFactory(encryptionOptionsMap);
         List<String> cipherSuitesList = (List<String>) encryptionOptionsMap.get("cipher_suites");
         String[] cipherSuites = cipherSuitesList == null ? null : cipherSuitesList.toArray(new String[0]);
         List<String> acceptedProtocolList = (List<String>) encryptionOptionsMap.get("accepted_protocols");
         String[] acceptedProtocols = acceptedProtocolList == null ? null : acceptedProtocolList.toArray(new String[0]);
-        IsolatedJmxTestClientSslSocketFactory clientFactory = new IsolatedJmxTestClientSslSocketFactory(clientSslContextFactory.createSSLContext(),
-                                                                                                        cipherSuites, acceptedProtocols);
+        JmxTestClientSslSocketFactory clientFactory = new JmxTestClientSslSocketFactory(clientSslContextFactory.createSSLContext(),
+                                                                                        cipherSuites, acceptedProtocols);
         jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
         jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 
     @Test
-    public void testDefaultSettings() throws Throwable
+    public void testDefaultEncryptionOptions() throws Throwable
     {
         setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
         ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
@@ -163,7 +166,7 @@ public class JMXEncryptionOptionsTest extends AbstractEncryptionOptionsImpl
 
     /**
      * Tests {@code disabled} jmx_encryption_options. Here even if the configured {@code keystore} is invalid, it will
-     * not matter and the JMX server/client will start.
+     * not matter and the JMX server/client should start.
      */
     @Test
     public void testDisabledEncryptionOptions() throws Throwable

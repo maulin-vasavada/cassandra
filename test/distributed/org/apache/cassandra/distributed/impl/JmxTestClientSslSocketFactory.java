@@ -27,14 +27,17 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
-public class IsolatedJmxTestClientSslSocketFactory extends SslRMIClientSocketFactory implements Serializable
+/**
+ * {@code RMIClientSocketFactory} for testing SSL based JMX clients.
+ */
+public class JmxTestClientSslSocketFactory extends SslRMIClientSocketFactory implements Serializable
 {
     private static final long serialVersionUID = 818579127759449333L;
     private final SocketFactory defaultSocketFactory;
     private final String[] cipherSuites;
     private final String[] acceptedProtocols;
 
-    public IsolatedJmxTestClientSslSocketFactory(SSLContext sslContext, String[] cipherSuites, String[] acceptedProtocols)
+    public JmxTestClientSslSocketFactory(SSLContext sslContext, String[] cipherSuites, String[] acceptedProtocols)
     {
         this.cipherSuites = cipherSuites;
         this.acceptedProtocols = acceptedProtocols;
