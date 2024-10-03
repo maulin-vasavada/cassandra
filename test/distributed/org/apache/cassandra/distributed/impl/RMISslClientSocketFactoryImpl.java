@@ -35,6 +35,7 @@ import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.utils.RMICloseableSocketFactory;
 
 /**
+ * {@code RMIClientSocketFactory} for testing SSL based JMX clients.
  * This class is used to override the local address the JMX client calculates when trying to connect,
  * which can otherwise be influenced by the system property "java.rmi.server.hostname" in strange and
  * unpredictable ways.

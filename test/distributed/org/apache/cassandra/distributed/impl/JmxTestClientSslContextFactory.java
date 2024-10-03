@@ -21,7 +21,6 @@ package org.apache.cassandra.distributed.impl;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.security.KeyStore;
-import java.util.List;
 import java.util.Map;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -36,12 +35,14 @@ import org.apache.cassandra.io.util.File;
 
 /**
  * Simplied and independent version of {@link org.apache.cassandra.security.FileBasedSslContextFactory} for
- * testing TLS based JMX clients that require configuring keystore and/or truststore.
+ * testing SSL based JMX clients that require configuring keystore and/or truststore.
  */
-public class IsolatedJmxTestClientSslContextFactory
+public class JmxTestClientSslContextFactory
 {
     protected final Map<String, Object> parameters;
+    // keystore is not needed when the JMX server does not require client-auth
     protected String keystore;
+    // keystore could be null in case JMX server does not require client-auth
     protected String keystore_password;
     protected final String truststore;
     protected final String truststore_password;
@@ -49,7 +50,7 @@ public class IsolatedJmxTestClientSslContextFactory
     protected final String algorithm;
     protected final String store_type;
 
-    public IsolatedJmxTestClientSslContextFactory(Map<String, Object> parameters)
+    public JmxTestClientSslContextFactory(Map<String, Object> parameters)
     {
         this.parameters = parameters;
         keystore = getString(EncryptionOptions.ConfigKey.KEYSTORE.getKeyName());
@@ -69,12 +70,6 @@ public class IsolatedJmxTestClientSslContextFactory
     protected String getString(String key)
     {
         return (String) parameters.get(key);
-    }
-
-    @SuppressWarnings("unchecked")
-    protected List<String> getStringList(String key)
-    {
-        return (List<String>) parameters.get(key);
     }
 
     protected Boolean getBoolean(String key, boolean defaultValue)

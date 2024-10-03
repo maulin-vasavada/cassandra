@@ -32,6 +32,9 @@ import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.utils.RMIClientSocketFactoryImpl;
 import org.apache.cassandra.utils.jmx.AbstractJmxSocketFactory;
 
+/**
+ * Implements {@link org.apache.cassandra.utils.jmx.IJmxSocketFactory} to be used for the isolated JMX testing.
+ */
 public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
 {
     private static final Logger logger = LoggerFactory.getLogger(IsolatedJmxSocketFactory.class);
@@ -52,7 +55,6 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     {
         RMISslClientSocketFactoryImpl clientFactory = new RMISslClientSocketFactoryImpl(serverAddress);
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-        //TODO Do we need this for the IsolatedJmx?
         env.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 

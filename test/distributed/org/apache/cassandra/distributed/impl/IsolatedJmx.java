@@ -88,14 +88,17 @@ public class IsolatedJmx
             String hostname = addr.getHostAddress();
             wrapper = new MBeanWrapper.InstanceMBeanWrapper(hostname + ":" + jmxPort);
             ((MBeanWrapper.DelegatingMbeanWrapper) MBeanWrapper.instance).setDelegate(wrapper);
-            Map<String, Object> env = new HashMap<>();
 
+            // CASSANDRA-18508: Sensitive JMX SSL configuration options can be easily exposed
             Map<String,Object> encryptionOptionsMap = (Map<String, Object>) config.getParams().get("jmx_encryption_options");
             EncryptionOptions jmxEncryptionOptions = getJmxEncryptionOptions(encryptionOptionsMap);
+            // Here the `localOnly` is always passed as true as it is for the local isolated JMX testing
+            // However if the `jmxEncryptionOptions` are provided or JMX SSL configuration is set it will configure
+            // the socket factories appropriately.
             Map<String, Object> socketFactories = new IsolatedJmxSocketFactory().configure(addr, true, jmxEncryptionOptions);
             serverSocketFactory = (RMIServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
             clientSocketFactory = (RMIClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
-            env.putAll(socketFactories);
+            Map<String, Object> env = new HashMap<>(socketFactories);
 
             // configure the RMI registry
             registry = new JMXServerUtils.JmxRegistry(jmxPort,
@@ -141,6 +144,11 @@ public class IsolatedJmx
         }
     }
 
+    /**
+     * Builds {@code EncryptionOptions} from the map based SSL configuration properties.
+     * @param encryptionOptionsMap of SSL configuration properties
+     * @return EncryptionOptions built object
+     */
     @SuppressWarnings("unchecked")
     private EncryptionOptions getJmxEncryptionOptions(Map<String,Object> encryptionOptionsMap)
     {
@@ -182,7 +190,7 @@ public class IsolatedJmx
 
     private void waitForJmxAvailability(Map<String, ?> env)
     {
-        try (JMXConnector ignored = JMXUtil.getJmxConnector(config, 1, env))
+        try (JMXConnector ignored = JMXUtil.getJmxConnector(config, 20, env))
         {
             // Do nothing - JMXUtil now retries
         }

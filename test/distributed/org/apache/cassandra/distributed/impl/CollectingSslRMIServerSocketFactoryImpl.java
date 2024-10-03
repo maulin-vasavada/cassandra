@@ -38,7 +38,7 @@ import org.apache.cassandra.utils.RMICloseableSocketFactory;
 
 
 /**
- * This class is used to keep track of RMI servers created during a cluster creation so we can
+ * This class is used to keep track of SSL based RMI servers created during a cluster creation to
  * later close the sockets, which would otherwise be left with a thread running waiting for
  * connections that would never show up as the server was otherwise closed.
  */

@@ -87,6 +87,7 @@ public class JMXServerUtils
         }
 
         // Configure the RMI client & server socket factories, including SSL config.
+        // CASSANDRA-18508: Sensitive JMX SSL configuration options can be easily exposed
         env.putAll(configureJmxSocketFactories(serverAddress, local));
 
         // configure the RMI registry
@@ -214,6 +215,19 @@ public class JMXServerUtils
         }
     }
 
+    /**
+     * Configures the client and server socket factories for the JMX connection. It uses {@link DefaultJmxSocketFactory}
+     * for configuring this.
+     *
+     * @param serverAddress the JMX server is bound to
+     * @param localOnly {@code true} if the JMX server only allows local connections; {@code false} if the JMX server
+     *                              allows the remote connections.
+     * @return Map<String, Object> containing {@code jmx.remote.rmi.client.socket.factory}, {@code jmx.remote.rmi.server.socket.factory}
+     * and {@code com.sun.jndi.rmi.factory.socket} properties for the client and server socket factories.
+     * @throws SSLException if it fails to configure the socket factories with the given input
+     *
+     * @see DefaultJmxSocketFactory
+     */
     @VisibleForTesting
     static Map<String, Object> configureJmxSocketFactories(InetAddress serverAddress, boolean localOnly) throws SSLException
     {

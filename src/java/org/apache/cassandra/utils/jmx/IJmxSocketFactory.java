@@ -37,7 +37,7 @@ public interface IJmxSocketFactory
      *     jmx.remote.rmi.server.socket.factory
      *     com.sun.jndi.rmi.factory.socket
      * </pre>
-     * 
+     *
      * In case of remote connection enabled, this also sets the following system properties,
      * <pre>
      *     com.sun.management.jmxremote.ssl=true

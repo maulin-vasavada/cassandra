@@ -20,7 +20,14 @@ package org.apache.cassandra.utils;
 
 import java.io.IOException;
 
+/**
+ * This represents closeable RMI Socket factory. It could be implemented for client and/or server socket factories.
+ */
 public interface RMICloseableSocketFactory
 {
+    /**
+     * Closes the underlying RMI socket factory appropriately.
+     * @throws IOException in case if fails to close the underlying RMI socket factory
+     */
     void close() throws IOException;
 }
