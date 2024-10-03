@@ -48,7 +48,7 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
+    public void configureSslClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
     {
         RMISslClientSocketFactoryImpl clientFactory = new RMISslClientSocketFactoryImpl(serverAddress);
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
@@ -57,8 +57,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
-                                             String[] enabledProtocols, boolean needClientAuth)
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
+                                                String[] enabledProtocols, boolean needClientAuth)
     {
         CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl(serverAddress,
                                                                                                             enabledCipherSuites,
@@ -69,8 +69,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
-                                             EncryptionOptions jmxEncryptionOptions) throws SSLException
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
         CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl
                                                                 (serverAddress, jmxEncryptionOptions);
