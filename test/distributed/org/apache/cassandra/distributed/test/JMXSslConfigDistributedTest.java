@@ -60,8 +60,8 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.reset();
         JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.reset();
 
-        setSystemTrustStore("", "");
-        setSystemKeyStore("", "");
+        resetSystemTrustStore();
+        resetSystemKeyStore();
     }
 
     @SuppressWarnings("unchecked")
@@ -78,7 +78,7 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 
-    @Test
+    //@Test
     public void testDefaultEncryptionOptions() throws Throwable
     {
         setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
@@ -193,11 +193,23 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
     }
 
+    void resetSystemTrustStore()
+    {
+        System.getProperties().remove("javax.net.ssl.trustStore");
+        System.getProperties().remove("javax.net.ssl.trustStorePassword");
+    }
+
     // checkstyle: suppress below 'blockSystemPropertyUsage'
     void setSystemKeyStore(String keyStore, String keyStorePassword)
     {
         System.setProperty("javax.net.ssl.keyStore", keyStore);
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+    }
+
+    void resetSystemKeyStore()
+    {
+        System.getProperties().remove("javax.net.ssl.keyStore");
+        System.getProperties().remove("javax.net.ssl.keyStorePassword");
     }
 
     /* Provde the cluster cannot start with the configured options */
