@@ -55,8 +55,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     public void configureSslClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
     {
         RMISslClientSocketFactoryImpl clientFactory = new RMISslClientSocketFactoryImpl(serverAddress,
-                                                                                        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.toString(),
-                                                                                        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.toString());
+                                                                                        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString(),
+                                                                                        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString());
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
         env.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
