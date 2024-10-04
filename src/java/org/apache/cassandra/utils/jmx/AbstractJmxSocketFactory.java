@@ -133,8 +133,8 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
      * Sets the following JMX system properties.
      * <pre>
      *     com.sun.management.jmxremote.ssl=true
-     *     javax.rmi.ssl.client.enabledCipherSuites=<applicable cipher suites provided in the configuration>
-     *     javax.rmi.ssl.client.enabledProtocols=<applicable protocols provided in the configuration>
+     *     javax.rmi.ssl.client.enabledCipherSuites=&lt;applicable cipher suites provided in the configuration&gt;
+     *     javax.rmi.ssl.client.enabledProtocols=&lt;applicable protocols provided in the configuration&gt;
      * </pre>
      * @param jmxEncryptionOptions
      */

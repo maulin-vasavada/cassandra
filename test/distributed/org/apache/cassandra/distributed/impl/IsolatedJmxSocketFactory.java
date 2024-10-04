@@ -28,6 +28,7 @@ import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.utils.RMIClientSocketFactoryImpl;
 import org.apache.cassandra.utils.jmx.AbstractJmxSocketFactory;
@@ -53,7 +54,9 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     @Override
     public void configureSslClientSocketFactory(Map<String, Object> env, InetAddress serverAddress)
     {
-        RMISslClientSocketFactoryImpl clientFactory = new RMISslClientSocketFactoryImpl(serverAddress);
+        RMISslClientSocketFactoryImpl clientFactory = new RMISslClientSocketFactoryImpl(serverAddress,
+                                                                                        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.toString(),
+                                                                                        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.toString());
         env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
         env.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }

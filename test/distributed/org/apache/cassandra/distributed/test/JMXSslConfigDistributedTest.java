@@ -186,12 +186,14 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         }
     }
 
+    // checkstyle: suppress below 'blockSystemPropertyUsage'
     void setSystemTrustStore(String trustStore, String trustStorePassword)
     {
         System.setProperty("javax.net.ssl.trustStore", trustStore);
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
     }
 
+    // checkstyle: suppress below 'blockSystemPropertyUsage'
     void setSystemKeyStore(String keyStore, String keyStorePassword)
     {
         System.setProperty("javax.net.ssl.keyStore", keyStore);

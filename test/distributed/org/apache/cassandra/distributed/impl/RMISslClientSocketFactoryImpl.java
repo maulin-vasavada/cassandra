@@ -31,7 +31,6 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.utils.RMICloseableSocketFactory;
 
 /**
@@ -46,10 +45,14 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
     private static final long serialVersionUID = 9054380061905145241L;
     private static final List<Socket> sockets = new ArrayList<>();
     private final InetAddress localAddress;
+    private final String enabledCipherSuites;
+    private final String enabledProtocols;
 
-    public RMISslClientSocketFactoryImpl(InetAddress localAddress)
+    public RMISslClientSocketFactoryImpl(InetAddress localAddress, String enabledCipherSuites, String enabledProtocls)
     {
         this.localAddress = localAddress;
+        this.enabledCipherSuites = enabledCipherSuites;
+        this.enabledProtocols = enabledProtocls;
     }
 
     @Override
@@ -65,14 +68,9 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
         //
         final SocketFactory sslSocketFactory = getDefaultClientSocketFactory();
         // Create the SSLSocket
-        //
         final SSLSocket sslSocket = (SSLSocket)
                                     sslSocketFactory.createSocket(localAddress, port);
         // Set the SSLSocket Enabled Cipher Suites
-        //
-        //TODO Avoid need of serializing the CassandraRelevantProperties
-        final String enabledCipherSuites =
-        CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString();
         if (enabledCipherSuites != null) {
             StringTokenizer st = new StringTokenizer(enabledCipherSuites, ",");
             int tokens = st.countTokens();
@@ -88,9 +86,6 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
             }
         }
         // Set the SSLSocket Enabled Protocols
-        //
-        //TODO Avoid need of serializing the CassandraRelevantProperties
-        final String enabledProtocols = CassandraRelevantProperties.JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString();
         if (enabledProtocols != null) {
             StringTokenizer st = new StringTokenizer(enabledProtocols, ",");
             int tokens = st.countTokens();

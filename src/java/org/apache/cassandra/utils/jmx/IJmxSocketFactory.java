@@ -41,8 +41,8 @@ public interface IJmxSocketFactory
      * In case of remote connection enabled, this also sets the following system properties,
      * <pre>
      *     com.sun.management.jmxremote.ssl=true
-     *     javax.rmi.ssl.client.enabledCipherSuites=<applicable cipher suites provided in the configuration>
-     *     javax.rmi.ssl.client.enabledProtocols=<applicable protocols provided in the configuration>
+     *     javax.rmi.ssl.client.enabledCipherSuites=&lt;applicable cipher suites provided in the configuration&gt;
+     *     javax.rmi.ssl.client.enabledProtocols=&lt;applicable protocols provided in the configuration&gt;
      * </pre>
      *
      * @param serverAddress the JMX server is bound to
@@ -51,7 +51,7 @@ public interface IJmxSocketFactory
      * @param jmxEncryptionOptions {@link EncryptionOptions} used for the SSL configuration in case of the remote
      *                                                      connections. Could be {@code null} if system properties are
      *                                                      used instead as per <a href="https://docs.oracle.com/en/java/javase/17/management/monitoring-and-management-using-jmx-technology.html#GUID-F08985BB-629A-4FBF-A0CB-8762DF7590E0">Java Documentation</a>
-     * @return Map<String, Object> containing {@code jmx.remote.rmi.client.socket.factory}, {@code jmx.remote.rmi.server.socket.factory}
+     * @return Map&lt;String, Object@gt; containing {@code jmx.remote.rmi.client.socket.factory}, {@code jmx.remote.rmi.server.socket.factory}
      * and {@code com.sun.jndi.rmi.factory.socket} properties for the client and server socket factories.
      * @throws SSLException if it fails to configure the socket factories with the given input
      */
