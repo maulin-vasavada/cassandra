@@ -59,9 +59,6 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.reset();
         JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.reset();
         JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.reset();
-
-        resetSystemTrustStore();
-        resetSystemKeyStore();
     }
 
     @SuppressWarnings("unchecked")
@@ -78,10 +75,17 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 
-    //@Test
+    @Test
     public void testDefaultEncryptionOptions() throws Throwable
     {
         setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
+        // We must set the keystore in the system variable to make sure that the call to SSLContext.getDefault()
+        // uses it when Client SSL Socketfactory is initialized even if we don't need it here.
+        // The same default SSLContext.getDefault() will be used by other methods like testSystemSettings() in this test
+        // for the Server SSL Socketfactory and at that time we will need the keystore to be available
+        // All of the above is the issue because we run everything (JMX Server, Client) in the same JVM, multiple times
+        // and the SSLContext.getDefault() relies on static initialization that is reused
+        setSystemKeyStore((String)validKeystore.get("keystore"), (String)validKeystore.get("keystore_password"));
         ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
                                                                         .put("enabled", true)
                                                                         .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
@@ -193,23 +197,11 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
     }
 
-    void resetSystemTrustStore()
-    {
-        System.getProperties().remove("javax.net.ssl.trustStore");
-        System.getProperties().remove("javax.net.ssl.trustStorePassword");
-    }
-
     // checkstyle: suppress below 'blockSystemPropertyUsage'
     void setSystemKeyStore(String keyStore, String keyStorePassword)
     {
         System.setProperty("javax.net.ssl.keyStore", keyStore);
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-    }
-
-    void resetSystemKeyStore()
-    {
-        System.getProperties().remove("javax.net.ssl.keyStore");
-        System.getProperties().remove("javax.net.ssl.keyStorePassword");
     }
 
     /* Provde the cluster cannot start with the configured options */
