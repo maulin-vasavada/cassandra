@@ -28,7 +28,6 @@ import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.cassandra.distributed.Cluster;
@@ -36,7 +35,6 @@ import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.impl.JmxTestClientSslContextFactory;
 import org.apache.cassandra.distributed.impl.JmxTestClientSslSocketFactory;
 import org.apache.cassandra.distributed.test.jmx.JMXGetterCheckTest;
-import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES;
@@ -164,7 +162,7 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
             c.set("jmx_encryption_options", encryptionOptionsMap);
         }).createWithoutStarting())
         {
-            assertCannotStartDueToConfigurationExceptionCause(cluster);
+            assertCannotStartDueToConfigurationException(cluster);
         }
     }
 
@@ -202,28 +200,5 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     {
         System.setProperty("javax.net.ssl.keyStore", keyStore);
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-    }
-
-    /* Provde the cluster cannot start with the configured options */
-    void assertCannotStartDueToConfigurationExceptionCause(Cluster cluster)
-    {
-        Throwable tr = null;
-        try
-        {
-            cluster.startup();
-        }
-        catch (Throwable maybeConfigException)
-        {
-            tr = maybeConfigException;
-        }
-
-        if (tr == null || tr.getCause() == null)
-        {
-            Assert.fail("Expected a ConfigurationException");
-        }
-        else
-        {
-            Assert.assertEquals(ConfigurationException.class.getName(), tr.getCause().getClass().getName());
-        }
     }
 }
