@@ -170,7 +170,7 @@ public class EncryptionOptions
 
         ConfigKey(String keyName)
         {
-            this.keyName=keyName;
+            this.keyName = keyName;
         }
 
         public String getKeyName()
@@ -182,7 +182,8 @@ public class EncryptionOptions
         {
             Set<String> valueSet = new HashSet<>();
             ConfigKey[] values = values();
-            for(ConfigKey key: values) {
+            for (ConfigKey key : values)
+            {
                 valueSet.add(key.getKeyName().toLowerCase());
             }
             return valueSet;
