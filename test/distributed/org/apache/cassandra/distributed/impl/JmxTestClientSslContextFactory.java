@@ -53,13 +53,13 @@ public class JmxTestClientSslContextFactory
     public JmxTestClientSslContextFactory(Map<String, Object> parameters)
     {
         this.parameters = parameters;
-        keystore = getString(EncryptionOptions.ConfigKey.KEYSTORE.getKeyName());
-        keystore_password = getString(EncryptionOptions.ConfigKey.KEYSTORE_PASSWORD.getKeyName());
-        truststore = getString(EncryptionOptions.ConfigKey.TRUSTSTORE.getKeyName());
-        truststore_password = getString(EncryptionOptions.ConfigKey.TRUSTSTORE_PASSWORD.getKeyName());
-        protocol = getString(EncryptionOptions.ConfigKey.PROTOCOL.getKeyName(), "TLS");
-        algorithm = getString(EncryptionOptions.ConfigKey.ALGORITHM.getKeyName());
-        store_type = getString(EncryptionOptions.ConfigKey.STORE_TYPE.getKeyName(), "JKS");
+        keystore = getString(EncryptionOptions.ConfigKey.KEYSTORE.toString());
+        keystore_password = getString(EncryptionOptions.ConfigKey.KEYSTORE_PASSWORD.toString());
+        truststore = getString(EncryptionOptions.ConfigKey.TRUSTSTORE.toString());
+        truststore_password = getString(EncryptionOptions.ConfigKey.TRUSTSTORE_PASSWORD.toString());
+        protocol = getString(EncryptionOptions.ConfigKey.PROTOCOL.toString(), "TLS");
+        algorithm = getString(EncryptionOptions.ConfigKey.ALGORITHM.toString());
+        store_type = getString(EncryptionOptions.ConfigKey.STORE_TYPE.toString(), "JKS");
     }
 
     protected String getString(String key, String defaultValue)

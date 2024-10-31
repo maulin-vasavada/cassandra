@@ -52,6 +52,8 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     @After
     public void resetJmxSslSystemProperties()
     {
+        // The below properties are set as side effect of other properties when tests run. Hence, these are reset here
+        // vs using try-with-resouces block
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL.reset();
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.reset();
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.reset();
@@ -69,10 +71,10 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         // for the Server SSL Socketfactory and at that time we will need the keystore to be available
         // All of the above is the issue because we run everything (JMX Server, Client) in the same JVM, multiple times
         // and the SSLContext.getDefault() relies on static initialization that is reused
-        try(WithProperties withProperties = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
-                                                                      "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
-                                                                      "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
-                                                                      "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        try(WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
+                                                               "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
+                                                               "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
+                                                               "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
         )
         {
             ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
@@ -96,10 +98,10 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testClientAuth() throws Throwable
     {
-        try(WithProperties withProperties = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
-                                                                      "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
-                                                                      "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
-                                                                      "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        try(WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
+                                                               "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
+                                                               "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
+                                                               "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
         )
         {
             ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
@@ -124,14 +126,14 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testSystemSettings() throws Throwable
     {
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.setBoolean(false);
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.setString("TLSv1.2,TLSv1.3,TLSv1.1");
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.reset();
-        try(WithProperties withProperties = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
-                                                                      "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
-                                                                      "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
-                                                                      "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        try(WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
+                                                               "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
+                                                               "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
+                                                               "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+                                                         .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL, true)
+                                                         .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH, false)
+                                                         .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS, "TLSv1.2,TLSv1.3,TLSv1.1")
         )
         {
             try (Cluster cluster = builder().withNodes(1).withConfig(c -> {

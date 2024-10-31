@@ -65,10 +65,8 @@ public class JMXSslConfigTest
     @After
     public void resetJmxSslSystemProperties()
     {
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.reset();
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.reset();
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.reset();
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.reset();
+        // The below properties are set as side effect of other properties when tests run. Hence, these are reset here
+        // vs using try-with-resouces block
         JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.reset();
         JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.reset();
     }
@@ -82,18 +80,22 @@ public class JMXSslConfigTest
         InetAddress serverAddress = InetAddress.getLoopbackAddress();
         String enabledProtocols = "TLSv1.2,TLSv1.3,TLSv1.1";
         String cipherSuites = "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256";
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.setBoolean(true);
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.setString(enabledProtocols);
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.setString(cipherSuites);
-        Map<String, Object> env = JMXServerUtils.configureJmxSocketFactories(serverAddress, false);
 
-        Assert.assertNotNull("ServerSocketFactory must not be null", env.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE));
-        Assert.assertTrue("RMI_SERVER_SOCKET_FACTORY must be of SslRMIServerSocketFactory type", env.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE) instanceof SslRMIServerSocketFactory);
-        Assert.assertNotNull("ClientSocketFactory must not be null", env.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE));
-        Assert.assertNotNull("com.sun.jndi.rmi.factory.socket must be set in the env", env.get("com.sun.jndi.rmi.factory.socket"));
-        Assert.assertEquals("protocols must match", enabledProtocols, JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString());
-        Assert.assertEquals("cipher-suites must match", cipherSuites, JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString());
+        try(WithProperties ignored = new WithProperties()
+                                            .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL, true)
+                                            .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH, true)
+                                            .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS, enabledProtocols)
+                                            .set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES, cipherSuites)
+        )
+        {
+            Map<String, Object> env = JMXServerUtils.configureJmxSocketFactories(serverAddress, false);
+            Assert.assertNotNull("ServerSocketFactory must not be null", env.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE));
+            Assert.assertTrue("RMI_SERVER_SOCKET_FACTORY must be of SslRMIServerSocketFactory type", env.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE) instanceof SslRMIServerSocketFactory);
+            Assert.assertNotNull("ClientSocketFactory must not be null", env.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE));
+            Assert.assertNotNull("com.sun.jndi.rmi.factory.socket must be set in the env", env.get("com.sun.jndi.rmi.factory.socket"));
+            Assert.assertEquals("protocols must match", enabledProtocols, JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString());
+            Assert.assertEquals("cipher-suites must match", cipherSuites, JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString());
+        }
     }
 
     /**
@@ -103,13 +105,15 @@ public class JMXSslConfigTest
     public void testLocalJmxServer() throws SSLException
     {
         InetAddress serverAddress = InetAddress.getLoopbackAddress();
-        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(false);
-        Map<String, Object> env = JMXServerUtils.configureJmxSocketFactories(serverAddress, true);
+        try(WithProperties ignored = new WithProperties().set(COM_SUN_MANAGEMENT_JMXREMOTE_SSL, false))
+        {
+            Map<String, Object> env = JMXServerUtils.configureJmxSocketFactories(serverAddress, true);
 
-        Assert.assertNull("ClientSocketFactory must be null", env.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE));
-        Assert.assertNull("com.sun.jndi.rmi.factory.socket must not be set in the env", env.get("com.sun.jndi.rmi.factory.socket"));
-        Assert.assertNotNull("ServerSocketFactory must not be null", env.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE));
-        Assert.assertNull("protocols must be empty", JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString());
-        Assert.assertNull("cipher-suites must empty", JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString());
-    }
+            Assert.assertNull("ClientSocketFactory must be null", env.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE));
+            Assert.assertNull("com.sun.jndi.rmi.factory.socket must not be set in the env", env.get("com.sun.jndi.rmi.factory.socket"));
+            Assert.assertNotNull("ServerSocketFactory must not be null", env.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE));
+            Assert.assertNull("protocols must be empty", JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString());
+            Assert.assertNull("cipher-suites must empty", JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString());
+        }
+     }
 }
