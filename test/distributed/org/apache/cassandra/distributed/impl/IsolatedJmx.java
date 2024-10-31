@@ -173,7 +173,7 @@ public class IsolatedJmx
             Object enabledOption = encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.getKeyName());
             boolean enabled = enabledOption != null ? (Boolean)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.getKeyName()) : false;
 
-            //TODO populate sslContextFactory also
+            //CASSANDRA-18508 NOTE- We do not populate sslContextFactory configuration here for tests, it could be enhanced
             jmxEncryptionOptions = jmxEncryptionOptions
                    .withKeyStore((String)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE.getKeyName()))
                    .withKeyStorePassword((String)encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE_PASSWORD.getKeyName()))

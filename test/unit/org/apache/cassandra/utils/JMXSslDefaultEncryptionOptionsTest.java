@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions;
 import org.apache.cassandra.distributed.shared.WithProperties;
+import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_CONFIG;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
@@ -93,5 +94,18 @@ public class JMXSslDefaultEncryptionOptionsTest
         Assert.assertNotNull("com.sun.jndi.rmi.factory.socket must be set in the env", env.get("com.sun.jndi.rmi.factory.socket"));
         Assert.assertEquals("javax.rmi.ssl.client.enabledProtocols must match", expectedProtocols, JAVAX_RMI_SSL_CLIENT_ENABLED_PROTOCOLS.getString());
         Assert.assertEquals("javax.rmi.ssl.client.enabledCipherSuites must match", expectedCipherSuites, JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.getString());
+    }
+
+    /**
+     * Tests for the error scenario when the JMX SSL configuration is provided as
+     * system configuration as well as encryption_options.
+     * @throws SSLException
+     */
+    @Test(expected = ConfigurationException.class)
+    public void testDuplicateConfig() throws SSLException
+    {
+        InetAddress serverAddress = InetAddress.getLoopbackAddress();
+        COM_SUN_MANAGEMENT_JMXREMOTE_SSL.setBoolean(true);
+        JMXServerUtils.configureJmxSocketFactories(serverAddress, false);
     }
 }

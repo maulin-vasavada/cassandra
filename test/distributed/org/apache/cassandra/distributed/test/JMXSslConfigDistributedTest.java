@@ -34,6 +34,7 @@ import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.impl.JmxTestClientSslContextFactory;
 import org.apache.cassandra.distributed.impl.JmxTestClientSslSocketFactory;
+import org.apache.cassandra.distributed.shared.WithProperties;
 import org.apache.cassandra.distributed.test.jmx.JMXGetterCheckTest;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
@@ -59,68 +60,64 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         JAVAX_RMI_SSL_CLIENT_ENABLED_CIPHER_SUITES.reset();
     }
 
-    @SuppressWarnings("unchecked")
-    private void configureClientSocketFactory(Map<String, Object> jmxEnv, Map<String, Object> encryptionOptionsMap) throws SSLException
-    {
-        JmxTestClientSslContextFactory clientSslContextFactory = new JmxTestClientSslContextFactory(encryptionOptionsMap);
-        List<String> cipherSuitesList = (List<String>) encryptionOptionsMap.get("cipher_suites");
-        String[] cipherSuites = cipherSuitesList == null ? null : cipherSuitesList.toArray(new String[0]);
-        List<String> acceptedProtocolList = (List<String>) encryptionOptionsMap.get("accepted_protocols");
-        String[] acceptedProtocols = acceptedProtocolList == null ? null : acceptedProtocolList.toArray(new String[0]);
-        JmxTestClientSslSocketFactory clientFactory = new JmxTestClientSslSocketFactory(clientSslContextFactory.createSSLContext(),
-                                                                                        cipherSuites, acceptedProtocols);
-        jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-        jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
-    }
-
     @Test
     public void testDefaultEncryptionOptions() throws Throwable
     {
-        setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
         // We must set the keystore in the system variable to make sure that the call to SSLContext.getDefault()
         // uses it when Client SSL Socketfactory is initialized even if we don't need it here.
         // The same default SSLContext.getDefault() will be used by other methods like testSystemSettings() in this test
         // for the Server SSL Socketfactory and at that time we will need the keystore to be available
         // All of the above is the issue because we run everything (JMX Server, Client) in the same JVM, multiple times
         // and the SSLContext.getDefault() relies on static initialization that is reused
-        setSystemKeyStore((String)validKeystore.get("keystore"), (String)validKeystore.get("keystore_password"));
-        ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
-                                                                        .put("enabled", true)
-                                                                        .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
-                                                                        .build();
-
-        try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX);
-            c.set("jmx_encryption_options", encryptionOptionsMap);
-        }).start())
+        try(WithProperties withProperties = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
+                                                                      "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
+                                                                      "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
+                                                                      "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        )
         {
-            Map<String, Object> jmxEnv = new HashMap<>();
-            configureClientSocketFactory(jmxEnv, encryptionOptionsMap);
-            // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
-            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+            ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
+                                                                            .put("enabled", true)
+                                                                            .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
+                                                                            .build();
+
+            try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
+                c.with(Feature.JMX);
+                c.set("jmx_encryption_options", encryptionOptionsMap);
+            }).start())
+            {
+                Map<String, Object> jmxEnv = new HashMap<>();
+                configureClientSocketFactory(jmxEnv, encryptionOptionsMap);
+                // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
+                JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+            }
         }
     }
 
     @Test
     public void testClientAuth() throws Throwable
     {
-        setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
-        setSystemKeyStore((String)validKeystore.get("keystore"), (String)validKeystore.get("keystore_password"));
-        ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
-                                                                        .put("enabled", true)
-                                                                        .put("require_client_auth", true)
-                                                                        .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
-                                                                        .build();
-
-        try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX);
-            c.set("jmx_encryption_options", encryptionOptionsMap);
-        }).start())
+        try(WithProperties withProperties = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
+                                                                      "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
+                                                                      "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
+                                                                      "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        )
         {
-            Map<String, Object> jmxEnv = new HashMap<>();
-            configureClientSocketFactory(jmxEnv, encryptionOptionsMap);
-            // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
-            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+            ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
+                                                                            .put("enabled", true)
+                                                                            .put("require_client_auth", true)
+                                                                            .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
+                                                                            .build();
+
+            try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
+                c.with(Feature.JMX);
+                c.set("jmx_encryption_options", encryptionOptionsMap);
+            }).start())
+            {
+                Map<String, Object> jmxEnv = new HashMap<>();
+                configureClientSocketFactory(jmxEnv, encryptionOptionsMap);
+                // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
+                JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+            }
         }
     }
 
@@ -131,19 +128,23 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_NEED_CLIENT_AUTH.setBoolean(false);
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS.setString("TLSv1.2,TLSv1.3,TLSv1.1");
         COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES.reset();
-        setSystemTrustStore((String)validKeystore.get("truststore"), (String)validKeystore.get("truststore_password"));
-        setSystemKeyStore((String)validKeystore.get("keystore"), (String)validKeystore.get("keystore_password"));
-
-        try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX);
-        }).start())
+        try(WithProperties withProperties = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
+                                                                      "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
+                                                                      "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
+                                                                      "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        )
         {
-            Map<String, Object> jmxEnv = new HashMap<>();
-            SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
-            jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
-            jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
-            // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
-            JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+            try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
+                c.with(Feature.JMX);
+            }).start())
+            {
+                Map<String, Object> jmxEnv = new HashMap<>();
+                SslRMIClientSocketFactory clientFactory = new SslRMIClientSocketFactory();
+                jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
+                jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
+                // Invoke the same code vs duplicating any code from the JMXGetterCheckTest
+                JMXGetterCheckTest.testAllValidGetters(cluster, jmxEnv);
+            }
         }
     }
 
@@ -188,17 +189,17 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         }
     }
 
-    // checkstyle: suppress below 'blockSystemPropertyUsage'
-    void setSystemTrustStore(String trustStore, String trustStorePassword)
+    @SuppressWarnings("unchecked")
+    private void configureClientSocketFactory(Map<String, Object> jmxEnv, Map<String, Object> encryptionOptionsMap) throws SSLException
     {
-        System.setProperty("javax.net.ssl.trustStore", trustStore);
-        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
-    }
-
-    // checkstyle: suppress below 'blockSystemPropertyUsage'
-    void setSystemKeyStore(String keyStore, String keyStorePassword)
-    {
-        System.setProperty("javax.net.ssl.keyStore", keyStore);
-        System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+        JmxTestClientSslContextFactory clientSslContextFactory = new JmxTestClientSslContextFactory(encryptionOptionsMap);
+        List<String> cipherSuitesList = (List<String>) encryptionOptionsMap.get("cipher_suites");
+        String[] cipherSuites = cipherSuitesList == null ? null : cipherSuitesList.toArray(new String[0]);
+        List<String> acceptedProtocolList = (List<String>) encryptionOptionsMap.get("accepted_protocols");
+        String[] acceptedProtocols = acceptedProtocolList == null ? null : acceptedProtocolList.toArray(new String[0]);
+        JmxTestClientSslSocketFactory clientFactory = new JmxTestClientSslSocketFactory(clientSslContextFactory.createSSLContext(),
+                                                                                        cipherSuites, acceptedProtocols);
+        jmxEnv.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientFactory);
+        jmxEnv.put("com.sun.jndi.rmi.factory.socket", clientFactory);
     }
 }

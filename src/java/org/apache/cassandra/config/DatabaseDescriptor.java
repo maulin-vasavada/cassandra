@@ -3672,12 +3672,6 @@ public class DatabaseDescriptor
         conf.client_encryption_options = update.apply(conf.client_encryption_options);
     }
 
-    @VisibleForTesting
-    public static void updateJmxEncryptionOptions(Function<EncryptionOptions, EncryptionOptions> update)
-    {
-        conf.jmx_encryption_options = update.apply(conf.jmx_encryption_options);
-    }
-
     public static int getHintedHandoffThrottleInKiB()
     {
         return conf.hinted_handoff_throttle.toKibibytes();

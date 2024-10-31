@@ -25,12 +25,15 @@ import javax.net.ssl.SSLException;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.distributed.shared.WithProperties;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_CONFIG;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_CIPHER_SUITES;
 import static org.apache.cassandra.config.CassandraRelevantProperties.COM_SUN_MANAGEMENT_JMXREMOTE_SSL_ENABLED_PROTOCOLS;
@@ -44,10 +47,19 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_
  */
 public class JMXSslConfigTest
 {
+    static WithProperties properties;
+
     @BeforeClass
     public static void setupDatabaseDescriptor()
     {
+        properties = new WithProperties().set(CASSANDRA_CONFIG, "cassandra.yaml");
         DatabaseDescriptor.daemonInitialization();
+    }
+
+    @AfterClass
+    public static void tearDownDatabaseDescriptor()
+    {
+        properties.close();
     }
 
     @After

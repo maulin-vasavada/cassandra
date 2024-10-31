@@ -62,8 +62,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
-                                                String[] enabledProtocols, boolean needClientAuth)
+    public void configureSslServerSocketFactoryBasedOnSystemConfig(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
+                                                                   String[] enabledProtocols, boolean needClientAuth)
     {
         CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl(serverAddress,
                                                                                                             enabledCipherSuites,
@@ -74,8 +74,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
-                                                EncryptionOptions jmxEncryptionOptions) throws SSLException
+    public void configureSslServerSocketFactoryBasedOnEncryptionOptions(Map<String, Object> env, InetAddress serverAddress,
+                                                                        EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
         CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl
                                                                 (serverAddress, jmxEncryptionOptions);
