@@ -83,8 +83,7 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
                                                                             .build();
 
             try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-                c.with(Feature.JMX);
-                c.set("jmx_encryption_options", encryptionOptionsMap);
+                c.with(Feature.JMX).set("jmx_encryption_options", encryptionOptionsMap);
             }).start())
             {
                 Map<String, Object> jmxEnv = new HashMap<>();
@@ -111,8 +110,7 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
                                                                             .build();
 
             try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-                c.with(Feature.JMX);
-                c.set("jmx_encryption_options", encryptionOptionsMap);
+                c.with(Feature.JMX).set("jmx_encryption_options", encryptionOptionsMap);
             }).start())
             {
                 Map<String, Object> jmxEnv = new HashMap<>();
@@ -161,8 +159,7 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
                                                                         .build();
 
         try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX);
-            c.set("jmx_encryption_options", encryptionOptionsMap);
+            c.with(Feature.JMX).set("jmx_encryption_options", encryptionOptionsMap);
         }).createWithoutStarting())
         {
             assertCannotStartDueToConfigurationException(cluster);
@@ -177,8 +174,7 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     public void testDisabledEncryptionOptions() throws Throwable
     {
         try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX);
-            c.set("jmx_encryption_options",
+            c.with(Feature.JMX).set("jmx_encryption_options",
                   ImmutableMap.builder()
                               .put("enabled", false)
                               .put("keystore", "/path/to/bad/keystore/that/should/not/exist")
