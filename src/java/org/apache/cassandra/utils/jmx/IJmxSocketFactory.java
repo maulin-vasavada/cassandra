@@ -30,19 +30,12 @@ import org.apache.cassandra.config.EncryptionOptions;
 public interface IJmxSocketFactory
 {
     /**
-     * Configures the client and server socket factories for the JMX connection.
-     * Specifically it configures below properties as applicable,
+     * Implementations of this method must configure the client and server socket factories for the JMX connection.
+     * Specifically it must configure below properties and return them as results,
      * <pre>
      *     jmx.remote.rmi.client.socket.factory
      *     jmx.remote.rmi.server.socket.factory
      *     com.sun.jndi.rmi.factory.socket
-     * </pre>
-     *
-     * In case of remote connection enabled, this also sets the following system properties,
-     * <pre>
-     *     com.sun.management.jmxremote.ssl=true
-     *     javax.rmi.ssl.client.enabledCipherSuites=&lt;applicable cipher suites provided in the configuration&gt;
-     *     javax.rmi.ssl.client.enabledProtocols=&lt;applicable protocols provided in the configuration&gt;
      * </pre>
      *
      * @param serverAddress the JMX server is bound to
