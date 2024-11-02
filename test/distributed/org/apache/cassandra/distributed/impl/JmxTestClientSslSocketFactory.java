@@ -47,26 +47,16 @@ public class JmxTestClientSslSocketFactory extends SslRMIClientSocketFactory imp
     @Override
     public Socket createSocket(String host, int port) throws IOException
     {
-        // Retrieve the SSLSocketFactory
-        //
-        // Create the SSLSocket
-        //
         final SSLSocket sslSocket = (SSLSocket)
                                     defaultSocketFactory.createSocket(host, port);
-        // Set the SSLSocket Enabled Cipher Suites
-        //
         if (cipherSuites != null)
         {
             sslSocket.setEnabledCipherSuites(cipherSuites);
         }
-        // Set the SSLSocket Enabled Protocols
-        //
         if (acceptedProtocols != null)
         {
             sslSocket.setEnabledProtocols(acceptedProtocols);
         }
-        // Return the preconfigured SSLSocket
-        //
         return sslSocket;
     }
 }

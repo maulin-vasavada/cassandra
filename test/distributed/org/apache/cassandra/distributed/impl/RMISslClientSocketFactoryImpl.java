@@ -44,6 +44,7 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
 {
     private static final long serialVersionUID = 9054380061905145241L;
     private static final List<Socket> sockets = new ArrayList<>();
+    private static SocketFactory defaultSocketFactory = null;
     private final InetAddress localAddress;
     private final String enabledCipherSuites;
     private final String enabledProtocols;
@@ -55,6 +56,13 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
         this.enabledProtocols = enabledProtocls;
     }
 
+    private static synchronized SocketFactory getDefaultClientSocketFactory()
+    {
+        if (defaultSocketFactory == null)
+            defaultSocketFactory = SSLSocketFactory.getDefault();
+        return defaultSocketFactory;
+    }
+
     @Override
     public Socket createSocket(String host, int port) throws IOException
     {
@@ -63,52 +71,56 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
         return socket;
     }
 
-    private Socket createSslSocket(int port) throws IOException {
-        // Retrieve the SSLSocketFactory
-        //
+    private Socket createSslSocket(int port) throws IOException
+    {
         final SocketFactory sslSocketFactory = getDefaultClientSocketFactory();
-        // Create the SSLSocket
         final SSLSocket sslSocket = (SSLSocket)
                                     sslSocketFactory.createSocket(localAddress, port);
-        // Set the SSLSocket Enabled Cipher Suites
-        if (enabledCipherSuites != null) {
+        if (enabledCipherSuites != null)
+        {
             StringTokenizer st = new StringTokenizer(enabledCipherSuites, ",");
             int tokens = st.countTokens();
-            String enabledCipherSuitesList[] = new String[tokens];
-            for (int i = 0 ; i < tokens; i++) {
+            String[] enabledCipherSuitesList = new String[tokens];
+            for (int i = 0; i < tokens; i++)
+            {
                 enabledCipherSuitesList[i] = st.nextToken();
             }
-            try {
+            try
+            {
                 sslSocket.setEnabledCipherSuites(enabledCipherSuitesList);
-            } catch (IllegalArgumentException e) {
+            }
+            catch (IllegalArgumentException e)
+            {
                 throw (IOException)
-                      new IOException(e.getMessage()).initCause(e);
+                      new IOException(e.getMessage(), e);
             }
         }
-        // Set the SSLSocket Enabled Protocols
-        if (enabledProtocols != null) {
+        if (enabledProtocols != null)
+        {
             StringTokenizer st = new StringTokenizer(enabledProtocols, ",");
             int tokens = st.countTokens();
-            String enabledProtocolsList[] = new String[tokens];
-            for (int i = 0 ; i < tokens; i++) {
+            String[] enabledProtocolsList = new String[tokens];
+            for (int i = 0; i < tokens; i++)
+            {
                 enabledProtocolsList[i] = st.nextToken();
             }
-            try {
+            try
+            {
                 sslSocket.setEnabledProtocols(enabledProtocolsList);
-            } catch (IllegalArgumentException e) {
+            }
+            catch (IllegalArgumentException e)
+            {
                 throw (IOException)
-                      new IOException(e.getMessage()).initCause(e);
+                      new IOException(e.getMessage(), e);
             }
         }
-        // Return the preconfigured SSLSocket
-        //
         return sslSocket;
     }
 
     @Override
     public void close() throws IOException
     {
-        for (Socket socket: sockets)
+        for (Socket socket : sockets)
         {
             try
             {
@@ -134,13 +146,5 @@ public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Se
     public int hashCode()
     {
         return Objects.hash(localAddress);
-    }
-
-    private static SocketFactory defaultSocketFactory = null;
-
-    private static synchronized SocketFactory getDefaultClientSocketFactory() {
-        if (defaultSocketFactory == null)
-            defaultSocketFactory = SSLSocketFactory.getDefault();
-        return defaultSocketFactory;
     }
 }

@@ -71,10 +71,10 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
         // for the Server SSL Socketfactory and at that time we will need the keystore to be available
         // All of the above is the issue because we run everything (JMX Server, Client) in the same JVM, multiple times
         // and the SSLContext.getDefault() relies on static initialization that is reused
-        try(WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
-                                                               "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
-                                                               "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
-                                                               "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        try (WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String) validKeystore.get("truststore"),
+                                                                "javax.net.ssl.trustStorePassword", (String) validKeystore.get("truststore_password"),
+                                                                "javax.net.ssl.keyStore", (String) validKeystore.get("keystore"),
+                                                                "javax.net.ssl.keyStorePassword", (String) validKeystore.get("keystore_password"))
         )
         {
             ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
@@ -97,10 +97,10 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testClientAuth() throws Throwable
     {
-        try(WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String)validKeystore.get("truststore"),
-                                                               "javax.net.ssl.trustStorePassword", (String)validKeystore.get("truststore_password"),
-                                                               "javax.net.ssl.keyStore", (String)validKeystore.get("keystore"),
-                                                               "javax.net.ssl.keyStorePassword", (String)validKeystore.get("keystore_password"))
+        try (WithProperties ignored = new WithProperties().with("javax.net.ssl.trustStore", (String) validKeystore.get("truststore"),
+                                                                "javax.net.ssl.trustStorePassword", (String) validKeystore.get("truststore_password"),
+                                                                "javax.net.ssl.keyStore", (String) validKeystore.get("keystore"),
+                                                                "javax.net.ssl.keyStorePassword", (String) validKeystore.get("keystore_password"))
         )
         {
             ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder().putAll(validKeystore)
@@ -151,15 +151,14 @@ public class JMXSslConfigDistributedTest extends AbstractEncryptionOptionsImpl
     @Test
     public void testInvalidKeystorePath() throws Throwable
     {
-        ImmutableMap<String, Object> encryptionOptionsMap = ImmutableMap.<String, Object>builder()
-                                                                        .put("enabled", true)
-                                                                        .put("keystore", "/path/to/bad/keystore/that/should/not/exist")
-                                                                        .put("keystore_password", "cassandra")
-                                                                        .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
-                                                                        .build();
-
         try (Cluster cluster = builder().withNodes(1).withConfig(c -> {
-            c.with(Feature.JMX).set("jmx_encryption_options", encryptionOptionsMap);
+            c.with(Feature.JMX).set("jmx_encryption_options",
+                                    ImmutableMap.<String, Object>builder()
+                                                .put("enabled", true)
+                                                .put("keystore", "/path/to/bad/keystore/that/should/not/exist")
+                                                .put("keystore_password", "cassandra")
+                                                .put("accepted_protocols", Arrays.asList("TLSv1.2", "TLSv1.3", "TLSv1.1"))
+                                                .build());
         }).createWithoutStarting())
         {
             assertCannotStartDueToConfigurationException(cluster);
