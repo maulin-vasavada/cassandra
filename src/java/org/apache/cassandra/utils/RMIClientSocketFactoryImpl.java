@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.rmi.server.RMIClientSocketFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +31,7 @@ import java.util.Objects;
  * which can otherwise be influenced by the system property "java.rmi.server.hostname" in strange and
  * unpredictable ways.
  */
-public class RMIClientSocketFactoryImpl implements RMIClientSocketFactory, Serializable, RMICloseableSocketFactory
+public class RMIClientSocketFactoryImpl implements Serializable, RMICloseableClientSocketFactory
 {
     private static final long serialVersionUID = 955153017775496366L;
     List<Socket> sockets = new ArrayList<>();

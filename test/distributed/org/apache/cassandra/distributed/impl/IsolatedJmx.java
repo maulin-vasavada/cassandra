@@ -20,8 +20,6 @@ package org.apache.cassandra.distributed.impl;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,7 +40,8 @@ import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.distributed.shared.JMXUtil;
 import org.apache.cassandra.utils.JMXServerUtils;
 import org.apache.cassandra.utils.MBeanWrapper;
-import org.apache.cassandra.utils.RMICloseableSocketFactory;
+import org.apache.cassandra.utils.RMICloseableClientSocketFactory;
+import org.apache.cassandra.utils.RMICloseableServerSocketFactory;
 import sun.rmi.transport.tcp.TCPEndpoint;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVA_RMI_DGC_LEASE_VALUE_IN_JVM_DTEST;
@@ -60,8 +59,8 @@ public class IsolatedJmx
     private JMXServerUtils.JmxRegistry registry;
     private RMIJRMPServerImpl jmxRmiServer;
     private MBeanWrapper.InstanceMBeanWrapper wrapper;
-    private RMIClientSocketFactory clientSocketFactory;
-    private RMIServerSocketFactory serverSocketFactory;
+    private RMICloseableClientSocketFactory clientSocketFactory;
+    private RMICloseableServerSocketFactory serverSocketFactory;
     private Logger inInstancelogger;
     private IInstanceConfig config;
 
@@ -96,8 +95,8 @@ public class IsolatedJmx
             // However if the `jmxEncryptionOptions` are provided or JMX SSL configuration is set it will configure
             // the socket factories appropriately.
             Map<String, Object> socketFactories = new IsolatedJmxSocketFactory().configure(addr, true, jmxEncryptionOptions);
-            serverSocketFactory = (RMIServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
-            clientSocketFactory = (RMIClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
+            serverSocketFactory = (RMICloseableServerSocketFactory) socketFactories.get(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
+            clientSocketFactory = (RMICloseableClientSocketFactory) socketFactories.get(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE);
             Map<String, Object> env = new HashMap<>(socketFactories);
 
             // configure the RMI registry
@@ -236,7 +235,7 @@ public class IsolatedJmx
         }
         try
         {
-            ((RMICloseableSocketFactory)clientSocketFactory).close();
+            clientSocketFactory.close();
         }
         catch (Throwable e)
         {
@@ -244,7 +243,7 @@ public class IsolatedJmx
         }
         try
         {
-            ((RMICloseableSocketFactory)serverSocketFactory).close();
+            serverSocketFactory.close();
         }
         catch (Throwable e)
         {

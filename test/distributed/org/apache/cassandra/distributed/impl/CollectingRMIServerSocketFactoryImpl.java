@@ -22,14 +22,13 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
-import java.rmi.server.RMIServerSocketFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import javax.net.ServerSocketFactory;
 
-import org.apache.cassandra.utils.RMICloseableSocketFactory;
+import org.apache.cassandra.utils.RMICloseableServerSocketFactory;
 
 
 /**
@@ -37,7 +36,7 @@ import org.apache.cassandra.utils.RMICloseableSocketFactory;
  * later close the sockets, which would otherwise be left with a thread running waiting for
  * connections that would never show up as the server was otherwise closed.
  */
-class CollectingRMIServerSocketFactoryImpl implements RMIServerSocketFactory, RMICloseableSocketFactory
+class CollectingRMIServerSocketFactoryImpl implements RMICloseableServerSocketFactory
 {
     private final InetAddress bindAddress;
     List<ServerSocket> sockets = new ArrayList<>();

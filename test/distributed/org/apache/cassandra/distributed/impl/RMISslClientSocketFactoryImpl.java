@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.rmi.server.RMIClientSocketFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +30,7 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.cassandra.utils.RMICloseableSocketFactory;
+import org.apache.cassandra.utils.RMICloseableClientSocketFactory;
 
 /**
  * {@code RMIClientSocketFactory} for testing SSL based JMX clients.
@@ -39,8 +38,7 @@ import org.apache.cassandra.utils.RMICloseableSocketFactory;
  * which can otherwise be influenced by the system property "java.rmi.server.hostname" in strange and
  * unpredictable ways.
  */
-public class RMISslClientSocketFactoryImpl implements RMIClientSocketFactory, Serializable,
-                                                      RMICloseableSocketFactory
+public class RMISslClientSocketFactoryImpl implements Serializable, RMICloseableClientSocketFactory
 {
     private static final long serialVersionUID = 9054380061905145241L;
     private static final List<Socket> sockets = new ArrayList<>();
