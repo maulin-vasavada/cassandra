@@ -44,7 +44,7 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.JAVAX_RMI_
  * If none of them is enabled, it checks the provided {@code localOnly} flag to configure the JMX server socket
  * factory for the local JMX connection.
  */
-abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
+abstract public class AbstractJmxSocketFactory
 {
     private static final Logger logger = LoggerFactory.getLogger(AbstractJmxSocketFactory.class);
 
@@ -74,7 +74,6 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
      * and {@code com.sun.jndi.rmi.factory.socket} properties for the client and server socket factories.
      * @throws SSLException if it fails to configure the socket factories with the given input
      */
-    @Override
     public Map<String, Object> configure(InetAddress serverAddress, boolean localOnly,
                                          EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
@@ -113,14 +112,14 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
             }
 
             configureSslClientSocketFactory(env, serverAddress);
-            configureSslServerSocketFactoryBasedOnSystemConfig(env, serverAddress, ciphers, protocols, requireClientAuth);
+            configureSslServerSocketFactory(env, serverAddress, ciphers, protocols, requireClientAuth);
         }
         else if (jmxEncryptionOptionsProvided)
         {
             logger.info("Enabling JMX SSL using jmx_encryption_options from cassandra.yaml");
             setJmxSystemProperties(jmxEncryptionOptions);
             configureSslClientSocketFactory(env, serverAddress);
-            configureSslServerSocketFactoryBasedOnEncryptionOptions(env, serverAddress, jmxEncryptionOptions);
+            configureSslServerSocketFactory(env, serverAddress, jmxEncryptionOptions);
         }
         else if (localOnly)
         {
@@ -152,9 +151,9 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
      * @param enabledProtocols for the SSL communication
      * @param needClientAuth {@code true} if it requires the client-auth; {@code false} otherwise
      */
-    abstract public void configureSslServerSocketFactoryBasedOnSystemConfig(Map<String, Object> env, InetAddress serverAddress,
-                                                                            String[] enabledCipherSuites, String[] enabledProtocols,
-                                                                            boolean needClientAuth);
+    abstract public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                         String[] enabledCipherSuites, String[] enabledProtocols,
+                                                         boolean needClientAuth);
 
     /**
      * Configures SSL based server socket factory based on provided encryption_options.
@@ -163,8 +162,8 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
      * @param jmxEncryptionOptions for the SSL communication
      * @throws SSLException if fails to configure the SSL based server socket factory
      */
-    abstract public void configureSslServerSocketFactoryBasedOnEncryptionOptions(Map<String, Object> env, InetAddress serverAddress,
-                                                                                 EncryptionOptions jmxEncryptionOptions) throws SSLException;
+    abstract public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                         EncryptionOptions jmxEncryptionOptions) throws SSLException;
 
     /**
      * Sets the following JMX system properties.
@@ -173,7 +172,7 @@ abstract public class AbstractJmxSocketFactory implements IJmxSocketFactory
      *     javax.rmi.ssl.client.enabledCipherSuites=&lt;applicable cipher suites provided in the configuration&gt;
      *     javax.rmi.ssl.client.enabledProtocols=&lt;applicable protocols provided in the configuration&gt;
      * </pre>
-     * @param jmxEncryptionOptions
+     * @param jmxEncryptionOptions for the SSL communication
      */
     private void setJmxSystemProperties(EncryptionOptions jmxEncryptionOptions)
     {

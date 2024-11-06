@@ -35,7 +35,7 @@ import org.apache.cassandra.utils.JmxSslRMIServerSocketFactory;
 import org.apache.cassandra.utils.RMIServerSocketFactoryImpl;
 
 /**
- * Default implementation of the {@link IJmxSocketFactory}.
+ * Default implementation of the JMX Socket factory.
  */
 public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
 {
@@ -56,8 +56,8 @@ public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureSslServerSocketFactoryBasedOnSystemConfig(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
-                                                                   String[] enabledProtocols, boolean needClientAuth)
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
+                                                String[] enabledProtocols, boolean needClientAuth)
     {
         SslRMIServerSocketFactory serverFactory = new SslRMIServerSocketFactory(enabledCipherSuites, enabledProtocols, needClientAuth);
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);
@@ -65,8 +65,8 @@ public final class DefaultJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureSslServerSocketFactoryBasedOnEncryptionOptions(Map<String, Object> env, InetAddress serverAddress,
-                                                                        EncryptionOptions jmxEncryptionOptions) throws SSLException
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
         JmxSslRMIServerSocketFactory serverFactory = new JmxSslRMIServerSocketFactory(jmxEncryptionOptions);
         env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, serverFactory);

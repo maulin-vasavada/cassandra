@@ -34,7 +34,7 @@ import org.apache.cassandra.utils.RMIClientSocketFactoryImpl;
 import org.apache.cassandra.utils.jmx.AbstractJmxSocketFactory;
 
 /**
- * Implements {@link org.apache.cassandra.utils.jmx.IJmxSocketFactory} to be used for the isolated JMX testing.
+ * JMX Socket factory used for the isolated JMX testing.
  */
 public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
 {
@@ -62,8 +62,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureSslServerSocketFactoryBasedOnSystemConfig(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
-                                                                   String[] enabledProtocols, boolean needClientAuth)
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress, String[] enabledCipherSuites,
+                                                String[] enabledProtocols, boolean needClientAuth)
     {
         CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl(serverAddress,
                                                                                                             enabledCipherSuites,
@@ -74,8 +74,8 @@ public class IsolatedJmxSocketFactory extends AbstractJmxSocketFactory
     }
 
     @Override
-    public void configureSslServerSocketFactoryBasedOnEncryptionOptions(Map<String, Object> env, InetAddress serverAddress,
-                                                                        EncryptionOptions jmxEncryptionOptions) throws SSLException
+    public void configureSslServerSocketFactory(Map<String, Object> env, InetAddress serverAddress,
+                                                EncryptionOptions jmxEncryptionOptions) throws SSLException
     {
         CollectingSslRMIServerSocketFactoryImpl serverFactory = new CollectingSslRMIServerSocketFactoryImpl
                                                                 (serverAddress, jmxEncryptionOptions);
