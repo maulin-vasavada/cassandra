@@ -517,160 +517,227 @@ public class EncryptionOptions
         }
     }
 
-    public EncryptionOptions withSslContextFactory(ParameterizedClass sslContextFactoryClass)
+    public static class Builder
     {
-        return new EncryptionOptions(sslContextFactoryClass, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        private ParameterizedClass ssl_context_factory;
+        private String keystore;
+        private String keystore_password;
+        private String keystore_password_file;
+        private String truststore;
+        private String truststore_password;
+        private String truststore_password_file;
+        private List<String> cipher_suites;
+        private String protocol;
+        private List<String> accepted_protocols;
+        private String algorithm;
+        private String store_type;
+        private String require_client_auth;
+        private boolean require_endpoint_verification;
+        private DurationSpec.IntMinutesBound max_certificate_validity_period;
+        private DurationSpec.IntMinutesBound certificate_validity_warn_threshold;
+        private Boolean enabled;
+        private Boolean optional;
+        private Boolean isEnabled;
+        private Boolean isOptional;
 
-    public EncryptionOptions withKeyStore(String keystore)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        private EncryptionOptions encryptionOptions;
 
-    public EncryptionOptions withKeyStorePassword(String keystore_password)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder()
+        {
+            ssl_context_factory = new ParameterizedClass("org.apache.cassandra.security.DefaultSslContextFactory",
+                                                         new HashMap<>());
+            keystore = "conf/.keystore";
+            keystore_password = null;
+            keystore_password_file = null;
+            truststore = "conf/.truststore";
+            truststore_password = null;
+            truststore_password_file = null;
+            cipher_suites = null;
+            protocol = null;
+            accepted_protocols = null;
+            algorithm = null;
+            store_type = "JKS";
+            require_client_auth = "false";
+            require_endpoint_verification = false;
+            enabled = null;
+            optional = null;
+            max_certificate_validity_period = null;
+            certificate_validity_warn_threshold = null;
+        }
 
-    public EncryptionOptions withKeyStorePasswordFile(String keystore_password_file)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder(ParameterizedClass ssl_context_factory,
+                                 String keystore, String keystore_password, String keystore_password_file,
+                                 String truststore, String truststore_password, String truststore_password_file,
+                                 List<String> cipher_suites, String protocol, List<String> accepted_protocols,
+                                 String algorithm, String store_type, String require_client_auth,
+                                 boolean require_endpoint_verification, Boolean enabled, Boolean optional,
+                                 DurationSpec.IntMinutesBound max_certificate_validity_period,
+                                 DurationSpec.IntMinutesBound certificate_validity_warn_threshold)
+        {
+            this.ssl_context_factory = ssl_context_factory;
+            this.keystore = keystore;
+            this.keystore_password = keystore_password;
+            this.keystore_password_file = keystore_password_file;
+            this.truststore = truststore;
+            this.truststore_password = truststore_password;
+            this.truststore_password_file = truststore_password_file;
+            this.cipher_suites = cipher_suites;
+            this.protocol = protocol;
+            this.accepted_protocols = accepted_protocols;
+            this.algorithm = algorithm;
+            this.store_type = store_type;
+            this.require_client_auth = require_client_auth;
+            this.require_endpoint_verification = require_endpoint_verification;
+            this.enabled = enabled;
+            this.optional = optional;
+            this.max_certificate_validity_period = max_certificate_validity_period;
+            this.certificate_validity_warn_threshold = certificate_validity_warn_threshold;
+        }
 
-    public EncryptionOptions withTrustStore(String truststore)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder(EncryptionOptions options)
+        {
+            ssl_context_factory = options.ssl_context_factory;
+            keystore = options.keystore;
+            keystore_password = options.keystore_password;
+            keystore_password_file = options.keystore_password_file;
+            truststore = options.truststore;
+            truststore_password = options.truststore_password;
+            truststore_password_file = options.truststore_password_file;
+            cipher_suites = options.cipher_suites;
+            protocol = options.protocol;
+            accepted_protocols = options.accepted_protocols;
+            algorithm = options.algorithm;
+            store_type = options.store_type;
+            require_client_auth = options.require_client_auth;
+            require_endpoint_verification = options.require_endpoint_verification;
+            enabled = options.enabled;
+            optional = options.optional;
+            max_certificate_validity_period = options.max_certificate_validity_period;
+            certificate_validity_warn_threshold = options.certificate_validity_warn_threshold;
+        }
 
-    public EncryptionOptions withTrustStorePassword(String truststore_password)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withSslContextFactory(ParameterizedClass sslContextFactoryClass)
+        {
+            this.ssl_context_factory = sslContextFactoryClass;
+            return this;
+        }
 
-    public EncryptionOptions withTrustStorePasswordFile(String truststore_password_file)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withKeyStore(String keystore)
+        {
+            this.keystore = keystore;
+            return this;
+        }
 
-    public EncryptionOptions withCipherSuites(List<String> cipher_suites)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withKeyStorePassword(String keystore_password)
+        {
+            this.keystore_password = keystore_password;
+            return this;
+        }
 
-    public EncryptionOptions withCipherSuites(String... cipher_suites)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, ImmutableList.copyOf(cipher_suites), protocol,
-                                     accepted_protocols, algorithm, store_type, require_client_auth,
-                                     require_endpoint_verification, enabled, optional, max_certificate_validity_period,
-                                     max_certificate_validity_period).applyConfig();
-    }
+        public Builder withKeyStorePasswordFile(String keystore_password_file)
+        {
+            this.keystore_password_file = keystore_password_file;
+            return this;
+        }
 
-    public EncryptionOptions withProtocol(String protocol)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withTrustStore(String truststore)
+        {
+            this.truststore = truststore;
+            return this;
+        }
 
+        public Builder withTrustStorePassword(String truststore_password)
+        {
+            this.truststore_password = truststore_password;
+            return this;
+        }
 
-    public EncryptionOptions withAcceptedProtocols(List<String> accepted_protocols)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols == null ? null :
-                                                                                   ImmutableList.copyOf(accepted_protocols),
-                                     algorithm, store_type, require_client_auth, require_endpoint_verification,
-                                     enabled, optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withTrustStorePasswordFile(String truststore_password_file)
+        {
+            this.truststore_password_file = truststore_password_file;
+            return this;
+        }
 
+        public Builder withCipherSuites(List<String> cipher_suites)
+        {
+            this.cipher_suites = cipher_suites;
+            return this;
+        }
 
-    public EncryptionOptions withAlgorithm(String algorithm)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withCipherSuites(String... cipher_suites)
+        {
+            this.cipher_suites = ImmutableList.copyOf(cipher_suites);
+            return this;
+        }
 
-    public EncryptionOptions withStoreType(String store_type)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withProtocol(String protocol)
+        {
+            this.protocol = protocol;
+            return this;
+        }
 
-    public EncryptionOptions withRequireClientAuth(ClientAuth require_client_auth)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth.value, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withAcceptedProtocols(List<String> accepted_protocols)
+        {
+            this.accepted_protocols = accepted_protocols == null ? null :
+                                      ImmutableList.copyOf(accepted_protocols);
+            return this;
+        }
 
-    public EncryptionOptions withRequireEndpointVerification(boolean require_endpoint_verification)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withAlgorithm(String algorithm)
+        {
+            this.algorithm = algorithm;
+            return this;
+        }
 
-    public EncryptionOptions withEnabled(boolean enabled)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withStoreType(String store_type)
+        {
+            this.store_type = store_type;
+            return this;
+        }
 
-    public EncryptionOptions withOptional(Boolean optional)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
-    }
+        public Builder withRequireClientAuth(ClientAuth require_client_auth)
+        {
+            this.require_client_auth = require_client_auth.value;
+            return this;
+        }
 
-    public EncryptionOptions withMaxCertificateValidityPeriod(DurationSpec.IntMinutesBound maxCertificateValidityPeriod)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, maxCertificateValidityPeriod, certificate_validity_warn_threshold).applyConfig();
-    }
+        public Builder withRequireEndpointVerification(boolean require_endpoint_verification)
+        {
+            this.require_endpoint_verification = require_endpoint_verification;
+            return this;
+        }
 
-    public EncryptionOptions withCertificateValidityWarnThreshold(DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
-    {
-        return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                     truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                     store_type, require_client_auth, require_endpoint_verification, enabled,
-                                     optional, max_certificate_validity_period, certificateValidityWarnThreshold).applyConfig();
+        public Builder withEnabled(boolean enabled)
+        {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder withOptional(Boolean optional)
+        {
+            this.optional = optional;
+            return this;
+        }
+
+        public Builder withMaxCertificateValidityPeriod(DurationSpec.IntMinutesBound maxCertificateValidityPeriod)
+        {
+            this.max_certificate_validity_period = maxCertificateValidityPeriod;
+            return this;
+        }
+
+        public Builder withCertificateValidityWarnThreshold(DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
+        {
+            this.certificate_validity_warn_threshold = certificateValidityWarnThreshold;
+            return this;
+        }
+
+        public EncryptionOptions build()
+        {
+            return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
+                                         truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
+                                         store_type, require_client_auth, require_endpoint_verification, enabled,
+                                         optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
+        }
     }
 
     /**
@@ -786,6 +853,200 @@ public class EncryptionOptions
             this.outbound_keystore = options.outbound_keystore;
             this.outbound_keystore_password = options.outbound_keystore_password;
             this.outbound_keystore_password_file = options.outbound_keystore_password_file;
+        }
+
+        public static class Builder extends EncryptionOptions.Builder
+        {
+            private InternodeEncryption internode_encryption;
+            private boolean legacy_ssl_storage_port_enabled;
+            private String outbound_keystore;
+            private String outbound_keystore_password;
+            private String outbound_keystore_password_file;
+
+            public Builder()
+            {
+                this.internode_encryption = InternodeEncryption.none;
+                this.legacy_ssl_storage_port_enabled = false;
+                this.outbound_keystore = null;
+                this.outbound_keystore_password = null;
+                this.outbound_keystore_password_file = null;
+            }
+
+            public Builder(ParameterizedClass sslContextFactoryClass, String keystore,
+                                           String keystore_password, String keystore_password_file, String outbound_keystore,
+                                           String outbound_keystore_password, String outbound_keystore_password_file,
+                                           String truststore, String truststore_password, String truststore_password_file,
+                                           List<String> cipher_suites, String protocol, List<String> accepted_protocols,
+                                           String algorithm, String store_type, String require_client_auth,
+                                           boolean require_endpoint_verification, Boolean optional,
+                                           InternodeEncryption internode_encryption, boolean legacy_ssl_storage_port_enabled,
+                                           DurationSpec.IntMinutesBound maxCertificateAgeMinutes,
+                                           DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
+            {
+                super(sslContextFactoryClass, keystore, keystore_password, keystore_password_file,
+                      truststore, truststore_password, truststore_password_file, cipher_suites,
+                      protocol, accepted_protocols, algorithm, store_type, require_client_auth, require_endpoint_verification,
+                      null, optional, maxCertificateAgeMinutes, certificateValidityWarnThreshold);
+                this.internode_encryption = internode_encryption;
+                this.legacy_ssl_storage_port_enabled = legacy_ssl_storage_port_enabled;
+                this.outbound_keystore = outbound_keystore;
+                this.outbound_keystore_password = outbound_keystore_password;
+                this.outbound_keystore_password_file = outbound_keystore_password_file;
+            }
+
+            public Builder(ServerEncryptionOptions options)
+            {
+                super(options);
+                this.internode_encryption = options.internode_encryption;
+                this.legacy_ssl_storage_port_enabled = options.legacy_ssl_storage_port_enabled;
+                this.outbound_keystore = options.outbound_keystore;
+                this.outbound_keystore_password = options.outbound_keystore_password;
+                this.outbound_keystore_password_file = options.outbound_keystore_password_file;
+            }
+
+            public Builder withSslContextFactory(ParameterizedClass sslContextFactoryClass)
+            {
+                super.withSslContextFactory(sslContextFactoryClass);
+                return this;
+            }
+
+            public Builder withKeyStore(String keystore)
+            {
+                super.withKeyStore(keystore);
+                return this;
+            }
+
+            public Builder withKeyStorePassword(String keystore_password)
+            {
+                super.withKeyStorePassword(keystore_password);
+                return this;
+            }
+
+            public Builder withKeyStorePasswordFile(String keystore_password_file)
+            {
+                super.withKeyStorePasswordFile(keystore_password_file);
+                return this;
+            }
+
+            public Builder withTrustStore(String truststore)
+            {
+                super.withTrustStore(truststore);
+                return this;
+            }
+
+            public Builder withTrustStorePassword(String truststore_password)
+            {
+                super.withTrustStorePassword(truststore_password);
+                return this;
+            }
+
+            public Builder withTrustStorePasswordFile(String truststore_password_file)
+            {
+                super.withTrustStorePasswordFile(truststore_password_file);
+                return this;
+            }
+
+            public Builder withCipherSuites(List<String> cipher_suites)
+            {
+                super.withCipherSuites(cipher_suites);
+                return this;
+            }
+
+            public Builder withCipherSuites(String... cipher_suites)
+            {
+                super.withCipherSuites(cipher_suites);
+                return this;
+            }
+
+            public Builder withProtocol(String protocol)
+            {
+                super.withProtocol(protocol);
+                return this;
+            }
+
+            public Builder withAcceptedProtocols(List<String> accepted_protocols)
+            {
+                super.withAcceptedProtocols(accepted_protocols);
+                return this;
+            }
+
+            public Builder withAlgorithm(String algorithm)
+            {
+                super.withAlgorithm(algorithm);
+                return this;
+            }
+
+            public Builder withStoreType(String store_type)
+            {
+                super.withStoreType(store_type);
+                return this;
+            }
+
+            public Builder withRequireClientAuth(ClientAuth require_client_auth)
+            {
+                super.withRequireClientAuth(require_client_auth);
+                return this;
+            }
+
+            public Builder withRequireEndpointVerification(boolean require_endpoint_verification)
+            {
+                super.withRequireEndpointVerification(require_endpoint_verification);
+                return this;
+            }
+
+            public Builder withEnabled(boolean enabled)
+            {
+                super.withEnabled(enabled);
+                return this;
+            }
+
+            public Builder withOptional(Boolean optional)
+            {
+                super.withOptional(optional);
+                return this;
+            }
+
+            public Builder withInternodeEncryption(InternodeEncryption internode_encryption)
+            {
+                this.internode_encryption = internode_encryption;
+                return this;
+            }
+
+            public Builder withLegacySslStoragePort(boolean enable_legacy_ssl_storage_port)
+            {
+                this.legacy_ssl_storage_port_enabled = enable_legacy_ssl_storage_port;
+                return this;
+            }
+
+            public Builder withOutboundKeystore(String outboundKeystore)
+            {
+                this.outbound_keystore = outboundKeystore;
+                return this;
+            }
+
+            public Builder withOutboundKeystorePassword(String outboundKeystorePassword)
+            {
+                this.outbound_keystore_password = outboundKeystorePassword;
+                return this;
+            }
+
+            public Builder withOutboundKeystorePasswordFile(String outboundKeystorePasswordFile)
+            {
+                this.outbound_keystore_password_file = outboundKeystorePasswordFile;
+                return this;
+            }
+
+            public ServerEncryptionOptions build()
+            {
+                return new ServerEncryptionOptions(super.ssl_context_factory, super.keystore, super.keystore_password, super.keystore_password_file,
+                                                   outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
+                                                   super.truststore, super.truststore_password, super.truststore_password_file,
+                                                   super.cipher_suites, super.protocol, super.accepted_protocols,
+                                                   super.algorithm, super.store_type, super.require_client_auth,
+                                                   super.require_endpoint_verification, super.optional, internode_encryption,
+                                                   legacy_ssl_storage_port_enabled, super.max_certificate_validity_period,
+                                                   super.certificate_validity_warn_threshold).applyConfigInternal();
+            }
         }
 
         @Override
@@ -909,285 +1170,6 @@ public class EncryptionOptions
             result += 31 * (outbound_keystore_password == null ? 0 : outbound_keystore_password.hashCode());
             result += 31 * (outbound_keystore_password_file == null ? 0 : outbound_keystore_password_file.hashCode());
             return result;
-        }
-
-        @Override
-        public ServerEncryptionOptions withSslContextFactory(ParameterizedClass sslContextFactoryClass)
-        {
-            return new ServerEncryptionOptions(sslContextFactoryClass, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withKeyStore(String keystore)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withKeyStorePassword(String keystore_password)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withKeyStorePasswordFile(String keystore_password_file)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withTrustStore(String truststore)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withTrustStorePassword(String truststore_password)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withTrustStorePasswordFile(String truststore_password_file)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withCipherSuites(List<String> cipher_suites)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withCipherSuites(String... cipher_suites)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               Arrays.asList(cipher_suites), protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withProtocol(String protocol)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withAcceptedProtocols(List<String> accepted_protocols)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withAlgorithm(String algorithm)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withStoreType(String store_type)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withRequireClientAuth(ClientAuth require_client_auth)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth.value,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        @Override
-        public ServerEncryptionOptions withRequireEndpointVerification(boolean require_endpoint_verification)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        public ServerEncryptionOptions withOptional(boolean optional)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        public ServerEncryptionOptions withInternodeEncryption(InternodeEncryption internode_encryption)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        public ServerEncryptionOptions withLegacySslStoragePort(boolean enable_legacy_ssl_storage_port)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               enable_legacy_ssl_storage_port, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        public ServerEncryptionOptions withOutboundKeystore(String outboundKeystore)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outboundKeystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        public ServerEncryptionOptions withOutboundKeystorePassword(String outboundKeystorePassword)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outboundKeystorePassword, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-
-        public ServerEncryptionOptions withOutboundKeystorePasswordFile(String outboundKeystorePasswordFile)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outboundKeystorePasswordFile,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, max_certificate_validity_period,
-                                               max_certificate_validity_period).applyConfigInternal();
-        }
-        @Override
-        public ServerEncryptionOptions withMaxCertificateValidityPeriod(DurationSpec.IntMinutesBound maxCertificateValidityPeriod)
-        {
-            return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
-                                               outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                               truststore, truststore_password, truststore_password_file,
-                                               cipher_suites, protocol, accepted_protocols,
-                                               algorithm, store_type, require_client_auth,
-                                               require_endpoint_verification, optional, internode_encryption,
-                                               legacy_ssl_storage_port_enabled, maxCertificateValidityPeriod,
-                                               certificate_validity_warn_threshold).applyConfigInternal();
         }
     }
 }
