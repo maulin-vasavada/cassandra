@@ -33,6 +33,7 @@ import io.netty.handler.ssl.OpenSslContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.config.EncryptionOptions.ServerEncryptionOptions.Builder;
 import org.apache.cassandra.distributed.shared.WithProperties;
 import org.apache.cassandra.transport.TlsTestUtils;
 
@@ -69,14 +70,15 @@ public class DefaultSslContextFactoryTest
     @Test
     public void getSslContextOpenSSL() throws IOException
     {
-        EncryptionOptions.ServerEncryptionOptions options = new EncryptionOptions.ServerEncryptionOptions().withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
-                                                                                                           .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
-                                                                                                           .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
-                                                                                                           .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                                                                                           .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
-                                                                                                           .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
-                                                                                                           .withRequireClientAuth(NOT_REQUIRED)
-                                                                                                           .withCipherSuites("TLS_RSA_WITH_AES_128_CBC_SHA");
+        EncryptionOptions.ServerEncryptionOptions options = new Builder().withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
+                                                                         .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
+                                                                         .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
+                                                                         .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
+                                                                         .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
+                                                                         .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
+                                                                         .withRequireClientAuth(NOT_REQUIRED)
+                                                                         .withCipherSuites("TLS_RSA_WITH_AES_128_CBC_SHA")
+                                                                         .build();
         SslContext sslContext = SSLFactory.getOrCreateSslContext(options, REQUIRED, ISslContextFactory.SocketType.CLIENT, "test");
         Assert.assertNotNull(sslContext);
         if (OpenSsl.isAvailable())

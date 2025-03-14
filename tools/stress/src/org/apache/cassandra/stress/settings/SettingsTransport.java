@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.config.EncryptionOptions.Builder;
 import org.apache.cassandra.stress.util.ResultLogger;
 
 import static java.lang.String.format;
@@ -49,26 +50,27 @@ public class SettingsTransport implements Serializable
         EncryptionOptions encOptions = new EncryptionOptions().applyConfig();
         if (options.trustStore.present())
         {
-            encOptions = encOptions
-                         .withEnabled(true)
-                         .withTrustStore(options.trustStore.value())
-                         .withTrustStorePassword(options.trustStorePw.setByUser() ? options.trustStorePw.value() : credentials.transportTruststorePassword)
-                         .withAlgorithm(options.alg.value())
-                         .withProtocol(options.protocol.value())
-                         .withCipherSuites(options.ciphers.value().split(","));
+            Builder encOptionsBuilder = new Builder(encOptions)
+                                        .withEnabled(true)
+                                        .withTrustStore(options.trustStore.value())
+                                        .withTrustStorePassword(options.trustStorePw.setByUser() ? options.trustStorePw.value() : credentials.transportTruststorePassword)
+                                        .withAlgorithm(options.alg.value())
+                                        .withProtocol(options.protocol.value())
+                                        .withCipherSuites(options.ciphers.value().split(","));
+
             if (options.keyStore.present())
             {
-                encOptions = encOptions
-                             .withKeyStore(options.keyStore.value())
-                             .withKeyStorePassword(options.keyStorePw.setByUser() ? options.keyStorePw.value() : credentials.transportKeystorePassword);
+                encOptionsBuilder.withKeyStore(options.keyStore.value())
+                                 .withKeyStorePassword(options.keyStorePw.setByUser() ? options.keyStorePw.value() : credentials.transportKeystorePassword);
             }
             else
             {
                 // mandatory for SSLFactory.createSSLContext(), see CASSANDRA-9325
-                encOptions = encOptions
-                             .withKeyStore(encOptions.truststore)
-                             .withKeyStorePassword(encOptions.truststore_password != null ? encOptions.truststore_password : credentials.transportTruststorePassword);
+                encOptionsBuilder.withKeyStore(encOptions.truststore)
+                                 .withKeyStorePassword(encOptions.truststore_password != null ? encOptions.truststore_password : credentials.transportTruststorePassword);
             }
+
+            encOptions = encOptionsBuilder.build();
         }
         return encOptions;
     }

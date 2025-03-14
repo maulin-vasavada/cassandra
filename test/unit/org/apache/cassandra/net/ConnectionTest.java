@@ -57,6 +57,7 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.config.EncryptionOptions.ServerEncryptionOptions.Builder;
 import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.distributed.test.log.ClusterMetadataTestHelper;
 import org.apache.cassandra.exceptions.RequestFailureReason;
@@ -176,8 +177,8 @@ public class ConnectionTest
         }
     }
 
-    static final EncryptionOptions.ServerEncryptionOptions encryptionOptions =
-            new EncryptionOptions.ServerEncryptionOptions()
+    static final Builder encryptionOptionsBuilder =
+            new Builder()
             .withLegacySslStoragePort(true)
             .withOptional(true)
             .withInternodeEncryption(EncryptionOptions.ServerEncryptionOptions.InternodeEncryption.all)
@@ -187,6 +188,7 @@ public class ConnectionTest
             .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
             .withRequireClientAuth(NOT_REQUIRED)
             .withCipherSuites("TLS_RSA_WITH_AES_128_CBC_SHA");
+    static final EncryptionOptions.ServerEncryptionOptions encryptionOptions = encryptionOptionsBuilder.build();
 
     static final List<Function<Settings, Settings>> MODIFIERS = ImmutableList.of(
         settings -> settings.outbound(outbound -> outbound.withEncryption(encryptionOptions))

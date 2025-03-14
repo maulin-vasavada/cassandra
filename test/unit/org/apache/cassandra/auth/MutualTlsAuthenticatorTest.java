@@ -38,6 +38,7 @@ import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.config.EncryptionOptions.Builder;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.net.MessagingService;
@@ -79,8 +80,10 @@ public class MutualTlsAuthenticatorTest
         StorageService.instance.initServer();
         ((CassandraRoleManager)DatabaseDescriptor.getRoleManager()).loadIdentityStatement();
         final Config config = DatabaseDescriptor.getRawConfig();
-        config.client_encryption_options = config.client_encryption_options.withEnabled(true)
-                                                                           .withRequireClientAuth(REQUIRED);
+        config.client_encryption_options = new Builder(config.client_encryption_options)
+                                           .withEnabled(true)
+                                           .withRequireClientAuth(REQUIRED)
+                                           .build();
     }
 
     @After
@@ -183,8 +186,10 @@ public class MutualTlsAuthenticatorTest
                      " & client_encryption_options.require_client_auth to be true";
         MutualTlsAuthenticator mutualTlsAuthenticator = createAndInitializeMtlsAuthenticator();
 
-        config.client_encryption_options = config.client_encryption_options.withEnabled(true)
-                                                                           .withRequireClientAuth(EncryptionOptions.ClientAuth.NOT_REQUIRED);
+        config.client_encryption_options = new Builder(config.client_encryption_options)
+                                           .withEnabled(true)
+                                           .withRequireClientAuth(EncryptionOptions.ClientAuth.NOT_REQUIRED)
+                                           .build();
         expectedException.expect(ConfigurationException.class);
         expectedException.expectMessage(msg);
         mutualTlsAuthenticator.validateConfiguration();

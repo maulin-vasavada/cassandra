@@ -176,16 +176,16 @@ public class IsolatedJmx
         {
             return null;
         }
-        EncryptionOptions jmxEncryptionOptions = new EncryptionOptions();
+        EncryptionOptions.Builder jmxEncryptionOptionsBuilder = new EncryptionOptions.Builder();
         String[] cipherSuitesArray = (String[]) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.CIPHER_SUITES.toString());
         if (cipherSuitesArray != null)
         {
-            jmxEncryptionOptions = jmxEncryptionOptions.withCipherSuites(cipherSuitesArray);
+            jmxEncryptionOptionsBuilder.withCipherSuites(cipherSuitesArray);
         }
         List<String> acceptedProtocols = (List<String>) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ACCEPTED_PROTOCOLS.toString());
         if (acceptedProtocols != null)
         {
-            jmxEncryptionOptions = jmxEncryptionOptions.withAcceptedProtocols(acceptedProtocols);
+            jmxEncryptionOptionsBuilder.withAcceptedProtocols(acceptedProtocols);
         }
 
         Boolean requireClientAuthValue = (Boolean) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.REQUIRE_CLIENT_AUTH.toString());
@@ -196,14 +196,14 @@ public class IsolatedJmx
         boolean enabled = enabledOption != null ? (Boolean) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.toString()) : false;
 
         //CASSANDRA-18508 NOTE - We do not populate sslContextFactory configuration here for tests, it could be enhanced
-        jmxEncryptionOptions = jmxEncryptionOptions
-                               .withKeyStore((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE.toString()))
-                               .withKeyStorePassword((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE_PASSWORD.toString()))
-                               .withTrustStore((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.TRUSTSTORE.toString()))
-                               .withTrustStorePassword((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.TRUSTSTORE_PASSWORD.toString()))
-                               .withRequireClientAuth(requireClientAuth)
-                               .withEnabled(enabled);
-        return jmxEncryptionOptions;
+        return jmxEncryptionOptionsBuilder
+               .withKeyStore((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE.toString()))
+               .withKeyStorePassword((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.KEYSTORE_PASSWORD.toString()))
+               .withTrustStore((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.TRUSTSTORE.toString()))
+               .withTrustStorePassword((String) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.TRUSTSTORE_PASSWORD.toString()))
+               .withRequireClientAuth(requireClientAuth)
+               .withEnabled(enabled)
+               .build();
     }
 
     private void waitForJmxAvailability(Map<String, ?> env)

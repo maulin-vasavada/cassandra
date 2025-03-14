@@ -88,7 +88,7 @@ public class TlsTestUtils
 
     public static EncryptionOptions getClientEncryptionOptions()
     {
-        return new EncryptionOptions(new EncryptionOptions()
+        return new EncryptionOptions(new EncryptionOptions.Builder()
                               .withEnabled(true)
                               .withRequireClientAuth(EncryptionOptions.ClientAuth.OPTIONAL)
                               .withOptional(true)
@@ -96,7 +96,7 @@ public class TlsTestUtils
                               .withKeyStorePassword(SERVER_KEYSTORE_PASSWORD)
                               .withTrustStore(SERVER_TRUSTSTORE_PATH)
                               .withTrustStorePassword(SERVER_TRUSTSTORE_PASSWORD)
-                              .withRequireEndpointVerification(false));
+                              .withRequireEndpointVerification(false).build());
     }
 
     public static void configureWithMutualTlsWithPasswordFallbackAuthenticator(Config config)

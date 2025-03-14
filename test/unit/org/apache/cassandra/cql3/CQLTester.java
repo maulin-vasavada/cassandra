@@ -620,13 +620,15 @@ public abstract class CQLTester
     public static void requireNativeProtocolClientEncryption()
     {
         DatabaseDescriptor.updateNativeProtocolEncryptionOptions((encryptionOptions) ->
-                                                                 encryptionOptions.withEnabled(true)
-                                                                                  .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
-                                                                                  .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                                                                  .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
-                                                                                  .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
-                                                                                  .withRequireEndpointVerification(false)
-                                                                                  .withRequireClientAuth(EncryptionOptions.ClientAuth.OPTIONAL));
+                                                                 new EncryptionOptions.Builder(encryptionOptions)
+                                                                 .withEnabled(true)
+                                                                 .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
+                                                                 .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
+                                                                 .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
+                                                                 .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
+                                                                 .withRequireEndpointVerification(false)
+                                                                 .withRequireClientAuth(EncryptionOptions.ClientAuth.OPTIONAL)
+                                                                 .build());
     }
 
     /**

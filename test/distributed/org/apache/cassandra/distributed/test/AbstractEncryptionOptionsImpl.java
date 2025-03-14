@@ -118,10 +118,11 @@ public class AbstractEncryptionOptionsImpl extends TestBaseImpl
         final int port;
         final List<String> acceptedProtocols;
         final List<String> cipherSuites;
-        final EncryptionOptions encryptionOptions = new EncryptionOptions()
+        final EncryptionOptions encryptionOptions = new EncryptionOptions.Builder()
                                                     .withEnabled(true)
                                                     .withKeyStore(validKeyStorePath).withKeyStorePassword(validKeyStorePassword)
-                                                    .withTrustStore(validTrustStorePath).withTrustStorePassword(validTrustStorePassword);
+                                                    .withTrustStore(validTrustStorePath).withTrustStorePassword(validTrustStorePassword)
+                                                    .build();
         private Throwable lastThrowable;
         private String lastProtocol;
         private String lastCipher;
@@ -202,7 +203,7 @@ public class AbstractEncryptionOptionsImpl extends TestBaseImpl
             setProtocolAndCipher(null, null);
 
             SslContext sslContext = SSLFactory.getOrCreateSslContext(
-            encryptionOptions.withAcceptedProtocols(acceptedProtocols).withCipherSuites(cipherSuites),
+            new EncryptionOptions.Builder(encryptionOptions).withAcceptedProtocols(acceptedProtocols).withCipherSuites(cipherSuites).build(),
             REQUIRED, ISslContextFactory.SocketType.CLIENT, "test");
 
             EventLoopGroup workerGroup = new NioEventLoopGroup();

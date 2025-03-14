@@ -17,7 +17,6 @@
  */
 package org.apache.cassandra.config;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -544,54 +543,7 @@ public class EncryptionOptions
 
         public Builder()
         {
-            ssl_context_factory = new ParameterizedClass("org.apache.cassandra.security.DefaultSslContextFactory",
-                                                         new HashMap<>());
-            keystore = "conf/.keystore";
-            keystore_password = null;
-            keystore_password_file = null;
-            truststore = "conf/.truststore";
-            truststore_password = null;
-            truststore_password_file = null;
-            cipher_suites = null;
-            protocol = null;
-            accepted_protocols = null;
-            algorithm = null;
-            store_type = "JKS";
-            require_client_auth = "false";
-            require_endpoint_verification = false;
-            enabled = null;
-            optional = null;
-            max_certificate_validity_period = null;
-            certificate_validity_warn_threshold = null;
-        }
-
-        public Builder(ParameterizedClass ssl_context_factory,
-                                 String keystore, String keystore_password, String keystore_password_file,
-                                 String truststore, String truststore_password, String truststore_password_file,
-                                 List<String> cipher_suites, String protocol, List<String> accepted_protocols,
-                                 String algorithm, String store_type, String require_client_auth,
-                                 boolean require_endpoint_verification, Boolean enabled, Boolean optional,
-                                 DurationSpec.IntMinutesBound max_certificate_validity_period,
-                                 DurationSpec.IntMinutesBound certificate_validity_warn_threshold)
-        {
-            this.ssl_context_factory = ssl_context_factory;
-            this.keystore = keystore;
-            this.keystore_password = keystore_password;
-            this.keystore_password_file = keystore_password_file;
-            this.truststore = truststore;
-            this.truststore_password = truststore_password;
-            this.truststore_password_file = truststore_password_file;
-            this.cipher_suites = cipher_suites;
-            this.protocol = protocol;
-            this.accepted_protocols = accepted_protocols;
-            this.algorithm = algorithm;
-            this.store_type = store_type;
-            this.require_client_auth = require_client_auth;
-            this.require_endpoint_verification = require_endpoint_verification;
-            this.enabled = enabled;
-            this.optional = optional;
-            this.max_certificate_validity_period = max_certificate_validity_period;
-            this.certificate_validity_warn_threshold = certificate_validity_warn_threshold;
+            this(new EncryptionOptions());
         }
 
         public Builder(EncryptionOptions options)
@@ -736,7 +688,7 @@ public class EncryptionOptions
             return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
                                          truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
                                          store_type, require_client_auth, require_endpoint_verification, enabled,
-                                         optional, max_certificate_validity_period, max_certificate_validity_period).applyConfig();
+                                         optional, max_certificate_validity_period, certificate_validity_warn_threshold).applyConfig();
         }
     }
 
@@ -865,33 +817,7 @@ public class EncryptionOptions
 
             public Builder()
             {
-                this.internode_encryption = InternodeEncryption.none;
-                this.legacy_ssl_storage_port_enabled = false;
-                this.outbound_keystore = null;
-                this.outbound_keystore_password = null;
-                this.outbound_keystore_password_file = null;
-            }
-
-            public Builder(ParameterizedClass sslContextFactoryClass, String keystore,
-                                           String keystore_password, String keystore_password_file, String outbound_keystore,
-                                           String outbound_keystore_password, String outbound_keystore_password_file,
-                                           String truststore, String truststore_password, String truststore_password_file,
-                                           List<String> cipher_suites, String protocol, List<String> accepted_protocols,
-                                           String algorithm, String store_type, String require_client_auth,
-                                           boolean require_endpoint_verification, Boolean optional,
-                                           InternodeEncryption internode_encryption, boolean legacy_ssl_storage_port_enabled,
-                                           DurationSpec.IntMinutesBound maxCertificateAgeMinutes,
-                                           DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
-            {
-                super(sslContextFactoryClass, keystore, keystore_password, keystore_password_file,
-                      truststore, truststore_password, truststore_password_file, cipher_suites,
-                      protocol, accepted_protocols, algorithm, store_type, require_client_auth, require_endpoint_verification,
-                      null, optional, maxCertificateAgeMinutes, certificateValidityWarnThreshold);
-                this.internode_encryption = internode_encryption;
-                this.legacy_ssl_storage_port_enabled = legacy_ssl_storage_port_enabled;
-                this.outbound_keystore = outbound_keystore;
-                this.outbound_keystore_password = outbound_keystore_password;
-                this.outbound_keystore_password_file = outbound_keystore_password_file;
+                super(new ServerEncryptionOptions());
             }
 
             public Builder(ServerEncryptionOptions options)

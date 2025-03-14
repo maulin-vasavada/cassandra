@@ -173,8 +173,10 @@ public class LoaderOptions
         int storagePort;
         int sslStoragePort;
         EncryptionOptions clientEncOptions = new EncryptionOptions();
+        EncryptionOptions.Builder clientEncOptionsBuilder = new EncryptionOptions.Builder(clientEncOptions);
         int connectionsPerHost = 1;
         EncryptionOptions.ServerEncryptionOptions serverEncOptions = new EncryptionOptions.ServerEncryptionOptions();
+        EncryptionOptions.ServerEncryptionOptions.Builder serverEncOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder(serverEncOptions);
         Set<InetAddress> hostsArg = new HashSet<>();
         Set<InetAddress> ignoresArg = new HashSet<>();
         Set<InetSocketAddress> hosts = new HashSet<>();
@@ -625,50 +627,52 @@ public class LoaderOptions
                 if (cmd.hasOption(SSL_TRUSTSTORE) || cmd.hasOption(SSL_TRUSTSTORE_PW) ||
                     cmd.hasOption(SSL_KEYSTORE) || cmd.hasOption(SSL_KEYSTORE_PW))
                 {
-                    clientEncOptions = clientEncOptions.withEnabled(true);
+                    clientEncOptionsBuilder.withEnabled(true);
                 }
 
                 if (cmd.hasOption(SSL_TRUSTSTORE))
                 {
-                    clientEncOptions = clientEncOptions.withTrustStore(cmd.getOptionValue(SSL_TRUSTSTORE));
+                    clientEncOptionsBuilder.withTrustStore(cmd.getOptionValue(SSL_TRUSTSTORE));
                 }
 
                 if (cmd.hasOption(SSL_TRUSTSTORE_PW))
                 {
-                    clientEncOptions = clientEncOptions.withTrustStorePassword(cmd.getOptionValue(SSL_TRUSTSTORE_PW));
+                    clientEncOptionsBuilder.withTrustStorePassword(cmd.getOptionValue(SSL_TRUSTSTORE_PW));
                 }
 
                 if (cmd.hasOption(SSL_KEYSTORE))
                 {
                     // if a keystore was provided, lets assume we'll need to use
-                    clientEncOptions = clientEncOptions.withKeyStore(cmd.getOptionValue(SSL_KEYSTORE))
+                    clientEncOptionsBuilder.withKeyStore(cmd.getOptionValue(SSL_KEYSTORE))
                                                        .withRequireClientAuth(REQUIRED);
                 }
 
                 if (cmd.hasOption(SSL_KEYSTORE_PW))
                 {
-                    clientEncOptions = clientEncOptions.withKeyStorePassword(cmd.getOptionValue(SSL_KEYSTORE_PW));
+                    clientEncOptionsBuilder.withKeyStorePassword(cmd.getOptionValue(SSL_KEYSTORE_PW));
                 }
 
                 if (cmd.hasOption(SSL_PROTOCOL))
                 {
-                    clientEncOptions = clientEncOptions.withProtocol(cmd.getOptionValue(SSL_PROTOCOL));
+                    clientEncOptionsBuilder.withProtocol(cmd.getOptionValue(SSL_PROTOCOL));
                 }
 
                 if (cmd.hasOption(SSL_ALGORITHM))
                 {
-                    clientEncOptions = clientEncOptions.withAlgorithm(cmd.getOptionValue(SSL_ALGORITHM));
+                    clientEncOptionsBuilder.withAlgorithm(cmd.getOptionValue(SSL_ALGORITHM));
                 }
 
                 if (cmd.hasOption(SSL_STORE_TYPE))
                 {
-                    clientEncOptions = clientEncOptions.withStoreType(cmd.getOptionValue(SSL_STORE_TYPE));
+                    clientEncOptionsBuilder.withStoreType(cmd.getOptionValue(SSL_STORE_TYPE));
                 }
 
                 if (cmd.hasOption(SSL_CIPHER_SUITES))
                 {
-                    clientEncOptions = clientEncOptions.withCipherSuites(cmd.getOptionValue(SSL_CIPHER_SUITES).split(","));
+                    clientEncOptionsBuilder.withCipherSuites(cmd.getOptionValue(SSL_CIPHER_SUITES).split(","));
                 }
+
+                clientEncOptions = clientEncOptionsBuilder.build();
 
                 if (cmd.hasOption(TARGET_KEYSPACE))
                 {
