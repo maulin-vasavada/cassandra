@@ -817,7 +817,7 @@ public class EncryptionOptions
 
             public Builder()
             {
-                super(new ServerEncryptionOptions());
+                this(new ServerEncryptionOptions());
             }
 
             public Builder(ServerEncryptionOptions options)
