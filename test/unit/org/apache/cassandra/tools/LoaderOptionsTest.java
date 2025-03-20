@@ -85,6 +85,34 @@ public class LoaderOptionsTest
         assertEquals("test.jks", options.clientEncOptions.keystore);
     }
 
+    /**
+     * Tests for client_encryption_options override from the command line.
+     */
+    @Test
+    public void testEncryptionSettingsOverride() throws Exception
+    {
+        // Default Cassandra config
+        File config = new File(Paths.get(".", "test", "conf", "cassandra-mtls.yaml").normalize());
+        String[] args = { "-d", "127.9.9.1", "-f", config.absolutePath(),
+                          "-ts", "test.jks", "-tspw", "truststorePass1",
+                          "-ks", "test.jks", "-kspw", "testdata1",
+                          "--ssl-ciphers", "TLS_RSA_WITH_AES_256_CBC_SHA",
+                          "--ssl-alg", "SunX509", "--store-type", "JKS", "--ssl-protocol", "TLS",
+                          sstableDirName("legacy_sstables", "legacy_ma_simple") };
+        LoaderOptions options = LoaderOptions.builder().parseArgs(args).build();
+        // Below two lines validating server encryption options is to verify that we are loading config from the yaml
+        assertEquals("test/conf/cassandra_ssl_test.keystore", options.serverEncOptions.keystore);
+        assertEquals("cassandra", options.serverEncOptions.keystore_password);
+        // Below asserts validate the overrides for the client encryption options from the command line
+        assertEquals("JKS", options.clientEncOptions.store_type);
+        assertEquals("test.jks", options.clientEncOptions.truststore);
+        assertEquals("truststorePass1", options.clientEncOptions.truststore_password);
+        assertEquals("test.jks", options.clientEncOptions.keystore);
+        assertEquals("testdata1", options.clientEncOptions.keystore_password);
+        assertEquals("TLS_RSA_WITH_AES_256_CBC_SHA", options.clientEncOptions.cipherSuitesArray()[0]);
+        assertEquals("SunX509", options.clientEncOptions.algorithm);
+    }
+
     @Test
     public void testThrottleDefaultSettings()
     {
