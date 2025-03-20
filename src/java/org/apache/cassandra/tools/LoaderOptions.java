@@ -338,6 +338,7 @@ public class LoaderOptions
         public Builder encOptions(EncryptionOptions encOptions)
         {
             this.clientEncOptions = encOptions;
+            this.clientEncOptionsBuilder = new EncryptionOptions.Builder(encOptions);
             return this;
         }
 
@@ -350,6 +351,7 @@ public class LoaderOptions
         public Builder serverEncOptions(EncryptionOptions.ServerEncryptionOptions serverEncOptions)
         {
             this.serverEncOptions = serverEncOptions;
+            this.serverEncOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder(serverEncOptions);
             return this;
         }
 
@@ -553,9 +555,10 @@ public class LoaderOptions
                                 "which is able to handle encrypted communication too.");
 
                 // Copy the encryption options and apply the config so that argument parsing can accesss isEnabled.
-                clientEncOptions = config.client_encryption_options.applyConfig();
-                serverEncOptions = config.server_encryption_options;
-                serverEncOptions.applyConfig();
+                clientEncOptionsBuilder = new EncryptionOptions.Builder(config.client_encryption_options);
+                clientEncOptions = clientEncOptionsBuilder.build();
+                serverEncOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder(config.server_encryption_options);
+                serverEncOptions = serverEncOptionsBuilder.build();
 
                 if (cmd.hasOption(NATIVE_PORT_OPTION))
                     nativePort = Integer.parseInt(cmd.getOptionValue(NATIVE_PORT_OPTION));
