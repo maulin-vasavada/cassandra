@@ -25,13 +25,14 @@ import com.google.common.base.Preconditions;
 import org.apache.cassandra.auth.IInternodeAuthenticator;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions.ServerEncryptionOptions;
-import org.apache.cassandra.config.EncryptionOptions.ServerEncryptionOptions.Builder;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
 
 import static java.lang.String.format;
-import static org.apache.cassandra.net.MessagingService.*;
+import static org.apache.cassandra.net.MessagingService.accept_messaging;
+import static org.apache.cassandra.net.MessagingService.accept_streaming;
+import static org.apache.cassandra.net.MessagingService.instance;
 
 public class InboundConnectionSettings
 {
@@ -147,7 +148,7 @@ public class InboundConnectionSettings
         ServerEncryptionOptions encryption = this.encryption;
         if (encryption == null)
             encryption = DatabaseDescriptor.getInternodeMessagingEncyptionOptions();
-        encryption = new Builder(encryption).withOptional(false).withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all).build();
+        encryption = ServerEncryptionOptions.build(encryption).withOptional(false).withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all).build();
 
         return this.withBindAddress(bindAddress.withPort(DatabaseDescriptor.getSSLStoragePort()))
                    .withEncryption(encryption)

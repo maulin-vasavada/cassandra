@@ -516,6 +516,11 @@ public class EncryptionOptions
         }
     }
 
+    public static Builder build(EncryptionOptions encryptionOptions)
+    {
+        return new Builder(encryptionOptions);
+    }
+
     public static class Builder
     {
         private ParameterizedClass ssl_context_factory;
@@ -805,6 +810,11 @@ public class EncryptionOptions
             this.outbound_keystore = options.outbound_keystore;
             this.outbound_keystore_password = options.outbound_keystore_password;
             this.outbound_keystore_password_file = options.outbound_keystore_password_file;
+        }
+
+        public static Builder build(ServerEncryptionOptions encryptionOptions)
+        {
+            return new Builder(encryptionOptions);
         }
 
         public static class Builder extends EncryptionOptions.Builder
