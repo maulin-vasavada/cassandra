@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.cassandra.security;
 
 import java.io.FileInputStream;
@@ -51,14 +51,15 @@ import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.transport.TlsTestUtils;
 
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.NOT_REQUIRED;
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.REQUIRED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class SSLFactoryTest
 {
     static final SelfSignedCertificate ssc;
+
     static
     {
         DatabaseDescriptor.daemonInitialization();
@@ -89,22 +90,30 @@ public class SSLFactoryTest
 
     private Builder addKeystoreOptions(ServerEncryptionOptions options)
     {
-        return new Builder(options).withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
-                                                           .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                                           .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
-                                                           .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD);
+        EncryptionOptions.ServerEncryptionOptions.Builder builder = new EncryptionOptions.ServerEncryptionOptions.Builder(options);
+
+        builder.withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
+               .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
+               .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
+               .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH);
+
+        return builder;
     }
 
     private Builder addPEMKeystoreOptions(ServerEncryptionOptions options)
     {
         ParameterizedClass sslContextFactoryClass = new ParameterizedClass("org.apache.cassandra.security.PEMBasedSslContextFactory",
                                                                            new HashMap<>());
-        return new Builder(options).withSslContextFactory(sslContextFactoryClass)
-                                   .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH_PEM)
-                                   .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                   .withOutboundKeystore(TlsTestUtils.SERVER_KEYSTORE_PATH_PEM)
-                                   .withOutboundKeystorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                   .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PEM_PATH);
+        EncryptionOptions.ServerEncryptionOptions.Builder builder = new EncryptionOptions.ServerEncryptionOptions.Builder(options);
+
+        builder.withOutboundKeystore(TlsTestUtils.SERVER_KEYSTORE_PATH_PEM)
+               .withOutboundKeystorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
+               .withSslContextFactory(sslContextFactoryClass)
+               .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH_PEM)
+               .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
+               .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PEM_PATH);
+
+        return builder;
     }
 
     @Test
@@ -116,8 +125,8 @@ public class SSLFactoryTest
                                      .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all);
             ServerEncryptionOptions options = optionsBuilder.build();
             ServerEncryptionOptions legacyOptions = optionsBuilder
-                                                    .withOptional(false)
                                                     .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
+                                                    .withOptional(false)
                                                     .build();
             options.sslContextFactoryInstance.initHotReloading();
             legacyOptions.sslContextFactoryInstance.initHotReloading();
@@ -192,9 +201,10 @@ public class SSLFactoryTest
             ServerEncryptionOptions options = optionsBuilder.withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.dc)
                                                             .build();
             // emulate InboundSockets and share the cert but with different options, no extra hot reloading init
-            ServerEncryptionOptions legacyOptions = optionsBuilder.withOptional(false)
-                                                                  .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
-                                                                  .build();
+            ServerEncryptionOptions legacyOptions = optionsBuilder
+                                                    .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
+                                                    .withOptional(false)
+                                                    .build();
             options.sslContextFactoryInstance.initHotReloading();
             legacyOptions.sslContextFactoryInstance.initHotReloading();
 
@@ -227,8 +237,8 @@ public class SSLFactoryTest
     public void testSslFactorySslInit_BadPassword_ThrowsException() throws IOException
     {
         ServerEncryptionOptions options = addKeystoreOptions(encryptionOptions)
-                                          .withKeyStorePassword("bad password")
                                           .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
+                                          .withKeyStorePassword("bad password")
                                           .build();
 
         SSLFactory.validateSslContext("testSslFactorySslInit_BadPassword_ThrowsException", options, NOT_REQUIRED, true);
@@ -243,8 +253,8 @@ public class SSLFactoryTest
             ServerEncryptionOptions options = optionsBuilder.build();
             // emulate InboundSockets and share the cert but with different options, no extra hot reloading init
             ServerEncryptionOptions legacyOptions = optionsBuilder
-                                                    .withOptional(false)
                                                     .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
+                                                    .withOptional(false)
                                                     .build();
 
             File testKeystoreFile = new File(options.keystore + ".test");
@@ -331,13 +341,14 @@ public class SSLFactoryTest
     }
 
     @Test
-    public void testCacheKeyEqualityForCustomSslContextFactory() {
+    public void testCacheKeyEqualityForCustomSslContextFactory()
+    {
 
-        Map<String,String> parameters1 = new HashMap<>();
+        Map<String, String> parameters1 = new HashMap<>();
         parameters1.put("key1", "value1");
         parameters1.put("key2", "value2");
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters1))
         .withProtocol("TLSv1.1")
         .withRequireClientAuth(REQUIRED)
@@ -347,11 +358,11 @@ public class SSLFactoryTest
         SSLFactory.CacheKey cacheKey1 = new SSLFactory.CacheKey(encryptionOptions1, ISslContextFactory.SocketType.SERVER, "test"
         );
 
-        Map<String,String> parameters2 = new HashMap<>();
+        Map<String, String> parameters2 = new HashMap<>();
         parameters2.put("key1", "value1");
         parameters2.put("key2", "value2");
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters2))
         .withProtocol("TLSv1.1")
         .withRequireClientAuth(REQUIRED)
@@ -365,13 +376,14 @@ public class SSLFactoryTest
     }
 
     @Test
-    public void testCacheKeyInequalityForCustomSslContextFactory() {
+    public void testCacheKeyInequalityForCustomSslContextFactory()
+    {
 
-        Map<String,String> parameters1 = new HashMap<>();
+        Map<String, String> parameters1 = new HashMap<>();
         parameters1.put("key1", "value11");
         parameters1.put("key2", "value12");
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters1))
         .withProtocol("TLSv1.1")
         .build();
@@ -379,11 +391,11 @@ public class SSLFactoryTest
         SSLFactory.CacheKey cacheKey1 = new SSLFactory.CacheKey(encryptionOptions1, ISslContextFactory.SocketType.SERVER, "test"
         );
 
-        Map<String,String> parameters2 = new HashMap<>();
+        Map<String, String> parameters2 = new HashMap<>();
         parameters2.put("key1", "value21");
         parameters2.put("key2", "value22");
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters2))
         .withProtocol("TLSv1.1")
         .build();
@@ -394,7 +406,8 @@ public class SSLFactoryTest
         Assert.assertNotEquals(cacheKey1, cacheKey2);
     }
 
-    public static class TestFileBasedSSLContextFactory extends FileBasedSslContextFactory {
+    public static class TestFileBasedSSLContextFactory extends FileBasedSslContextFactory
+    {
         public TestFileBasedSSLContextFactory(Map<String, Object> parameters)
         {
             super(parameters);

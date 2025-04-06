@@ -38,7 +38,6 @@ import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions;
-import org.apache.cassandra.config.EncryptionOptions.Builder;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.net.MessagingService;
@@ -49,7 +48,7 @@ import org.apache.cassandra.utils.MBeanWrapper;
 import static org.apache.cassandra.auth.AuthTestUtils.getMockInetAddress;
 import static org.apache.cassandra.auth.AuthTestUtils.initializeIdentityRolesTable;
 import static org.apache.cassandra.auth.AuthTestUtils.loadCertificateChain;
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.REQUIRED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -80,7 +79,7 @@ public class MutualTlsAuthenticatorTest
         StorageService.instance.initServer();
         ((CassandraRoleManager)DatabaseDescriptor.getRoleManager()).loadIdentityStatement();
         final Config config = DatabaseDescriptor.getRawConfig();
-        config.client_encryption_options = new Builder(config.client_encryption_options)
+        config.client_encryption_options = new EncryptionOptions.ClientEncryptionOptions.Builder(config.client_encryption_options)
                                            .withEnabled(true)
                                            .withRequireClientAuth(REQUIRED)
                                            .build();
@@ -186,9 +185,9 @@ public class MutualTlsAuthenticatorTest
                      " & client_encryption_options.require_client_auth to be true";
         MutualTlsAuthenticator mutualTlsAuthenticator = createAndInitializeMtlsAuthenticator();
 
-        config.client_encryption_options = new Builder(config.client_encryption_options)
+        config.client_encryption_options = new EncryptionOptions.ClientEncryptionOptions.Builder(config.client_encryption_options)
                                            .withEnabled(true)
-                                           .withRequireClientAuth(EncryptionOptions.ClientAuth.NOT_REQUIRED)
+                                           .withRequireClientAuth(EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED)
                                            .build();
         expectedException.expect(ConfigurationException.class);
         expectedException.expectMessage(msg);

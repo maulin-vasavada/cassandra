@@ -361,9 +361,9 @@ public class MessagingServiceTest
     @Test
     public void listenRequiredSecureConnection() throws InterruptedException
     {
-        ServerEncryptionOptions serverEncryptionOptions = new Builder().withOptional(false)
-                                                                       .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
+        ServerEncryptionOptions serverEncryptionOptions = new Builder().withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
                                                                        .withLegacySslStoragePort(false)
+                                                                       .withOptional(false)
                                                                        .build();
         listen(serverEncryptionOptions, false);
     }
@@ -371,9 +371,9 @@ public class MessagingServiceTest
     @Test
     public void listenRequiredSecureConnectionWithBroadcastAddr() throws InterruptedException
     {
-        ServerEncryptionOptions serverEncryptionOptions = new Builder().withOptional(false)
-                                                                       .withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
+        ServerEncryptionOptions serverEncryptionOptions = new Builder().withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
                                                                        .withLegacySslStoragePort(false)
+                                                                       .withOptional(false)
                                                                        .build();
         listen(serverEncryptionOptions, true);
     }
@@ -382,8 +382,8 @@ public class MessagingServiceTest
     public void listenRequiredSecureConnectionWithLegacyPort() throws InterruptedException
     {
         ServerEncryptionOptions serverEncryptionOptions = new Builder().withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
-                                                                       .withOptional(false)
                                                                        .withLegacySslStoragePort(true)
+                                                                       .withOptional(false)
                                                                        .build();
         listen(serverEncryptionOptions, false);
     }
@@ -392,8 +392,8 @@ public class MessagingServiceTest
     public void listenRequiredSecureConnectionWithBroadcastAddrAndLegacyPort() throws InterruptedException
     {
         ServerEncryptionOptions serverEncryptionOptions = new Builder().withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)
-                                                                       .withOptional(false)
                                                                        .withLegacySslStoragePort(true)
+                                                                       .withOptional(false)
                                                                        .build();
         listen(serverEncryptionOptions, true);
     }

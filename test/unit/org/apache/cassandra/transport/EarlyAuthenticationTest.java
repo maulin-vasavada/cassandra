@@ -33,7 +33,6 @@ import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.MutualTlsAuthenticator;
 import org.apache.cassandra.auth.SpiffeCertificateValidator;
 import org.apache.cassandra.config.EncryptionOptions;
-import org.apache.cassandra.config.EncryptionOptions.Builder;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.cql3.QueryProcessor;
@@ -85,22 +84,23 @@ public class EarlyAuthenticationTest extends CQLTester
         });
     }
 
-    private EncryptionOptions clientEncryptionOptions(boolean presentClientCertificate)
+    private EncryptionOptions.ClientEncryptionOptions clientEncryptionOptions(boolean presentClientCertificate)
     {
-        Builder encryptionOptionsBuilder = new Builder().withEnabled(true)
-                                                        .withRequireClientAuth(EncryptionOptions.ClientAuth.OPTIONAL)
-                                                        .withTrustStore(TlsTestUtils.CLIENT_TRUSTSTORE_PATH)
-                                                        .withTrustStorePassword(TlsTestUtils.CLIENT_TRUSTSTORE_PASSWORD)
-                                                        .withSslContextFactory(new ParameterizedClass(SimpleClientSslContextFactory.class.getName()));
+        EncryptionOptions.ClientEncryptionOptions.Builder builder = new EncryptionOptions.ClientEncryptionOptions.Builder();
+        builder.withEnabled(true)
+               .withRequireClientAuth(EncryptionOptions.ClientEncryptionOptions.ClientAuth.OPTIONAL)
+               .withTrustStore(TlsTestUtils.CLIENT_TRUSTSTORE_PATH)
+               .withTrustStorePassword(TlsTestUtils.CLIENT_TRUSTSTORE_PASSWORD)
+               .withSslContextFactory(new ParameterizedClass(SimpleClientSslContextFactory.class.getName()));
 
         if (presentClientCertificate)
         {
-            encryptionOptionsBuilder.withKeyStore(TlsTestUtils.CLIENT_SPIFFE_KEYSTORE_PATH)
+            builder.withKeyStore(TlsTestUtils.CLIENT_SPIFFE_KEYSTORE_PATH)
                                     .withStoreType("JKS")
                                     .withKeyStorePassword(TlsTestUtils.CLIENT_SPIFFE_KEYSTORE_PASSWORD);
         }
 
-        return new EncryptionOptions(encryptionOptionsBuilder.build());
+        return builder.build();
     }
 
     @Test
@@ -180,6 +180,5 @@ public class EarlyAuthenticationTest extends CQLTester
             }
         };
     }
-
 }
 

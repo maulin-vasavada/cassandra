@@ -45,10 +45,8 @@ import static org.apache.cassandra.utils.LocalizeString.toLowerCaseLocalized;
  * Examples of such options are: supported cipher-suites, ssl protocol with version, accepted protocols, end-point
  * verification, require client-auth/cert etc.
  */
-public class EncryptionOptions
+public abstract class EncryptionOptions<T extends EncryptionOptions<T>>
 {
-    Logger logger = LoggerFactory.getLogger(EncryptionOptions.class);
-
     public enum TlsEncryptionPolicy
     {
         UNENCRYPTED("unencrypted"),
@@ -68,39 +66,50 @@ public class EncryptionOptions
         }
     }
 
-    public enum ClientAuth
+    public enum ConfigKey
     {
-        REQUIRED("true"),
-        NOT_REQUIRED("false"),
-        OPTIONAL("optional");
-        private final String value;
-        private static final Map<String, ClientAuth> VALUES = new HashMap<>();
-        static
+        KEYSTORE("keystore"),
+        KEYSTORE_PASSWORD("keystore_password"),
+        KEYSTORE_PASSWORD_FILE("keystore_password_file"),
+        OUTBOUND_KEYSTORE("outbound_keystore"),
+        OUTBOUND_KEYSTORE_PASSWORD("outbound_keystore_password"),
+        OUTBOUND_KEYSTORE_PASSWORD_FILE("outbound_keystore_password_file"),
+        TRUSTSTORE("truststore"),
+        TRUSTSTORE_PASSWORD("truststore_password"),
+        TRUSTSTORE_PASSWORD_FILE("truststore_password_file"),
+        CIPHER_SUITES("cipher_suites"),
+        PROTOCOL("protocol"),
+        ACCEPTED_PROTOCOLS("accepted_protocols"),
+        ALGORITHM("algorithm"),
+        STORE_TYPE("store_type"),
+        REQUIRE_CLIENT_AUTH("require_client_auth"),
+        REQUIRE_ENDPOINT_VERIFICATION("require_endpoint_verification"),
+        ENABLED("enabled"),
+        OPTIONAL("optional"),
+        MAX_CERTIFICATE_VALIDITY_PERIOD("max_certificate_validity_period"),
+        CERTIFICATE_VALIDITY_WARN_THRESHOLD("certificate_validity_warn_threshold");
+
+        final String keyName;
+
+        ConfigKey(String keyName)
         {
-            for (ClientAuth clientAuth : ClientAuth.values())
+            this.keyName = keyName;
+        }
+
+        public String toString()
+        {
+            return keyName;
+        }
+
+        static Set<String> asSet()
+        {
+            Set<String> valueSet = new HashSet<>();
+            ConfigKey[] values = values();
+            for (ConfigKey key : values)
             {
-                VALUES.put(clientAuth.value, clientAuth);
-                VALUES.put(toLowerCaseLocalized(clientAuth.name()), clientAuth);
+                valueSet.add(toLowerCaseLocalized(key.toString()));
             }
-        }
-
-        ClientAuth(String value)
-        {
-            this.value = value;
-        }
-
-        public static ClientAuth from(String value)
-        {
-            if (VALUES.containsKey(toLowerCaseLocalized(value)))
-            {
-                return VALUES.get(toLowerCaseLocalized(value));
-            }
-            throw new ConfigurationException(value + " is not a valid ClientAuth option");
-        }
-
-        public String value()
-        {
-            return value;
+            return valueSet;
         }
     }
 
@@ -151,53 +160,6 @@ public class EncryptionOptions
      * to use this option instance.
      */
     public transient ISslContextFactory sslContextFactoryInstance;
-
-    public enum ConfigKey
-    {
-        KEYSTORE("keystore"),
-        KEYSTORE_PASSWORD("keystore_password"),
-        KEYSTORE_PASSWORD_FILE("keystore_password_file"),
-        OUTBOUND_KEYSTORE("outbound_keystore"),
-        OUTBOUND_KEYSTORE_PASSWORD("outbound_keystore_password"),
-        OUTBOUND_KEYSTORE_PASSWORD_FILE("outbound_keystore_password_file"),
-        TRUSTSTORE("truststore"),
-        TRUSTSTORE_PASSWORD("truststore_password"),
-        TRUSTSTORE_PASSWORD_FILE("truststore_password_file"),
-        CIPHER_SUITES("cipher_suites"),
-        PROTOCOL("protocol"),
-        ACCEPTED_PROTOCOLS("accepted_protocols"),
-        ALGORITHM("algorithm"),
-        STORE_TYPE("store_type"),
-        REQUIRE_CLIENT_AUTH("require_client_auth"),
-        REQUIRE_ENDPOINT_VERIFICATION("require_endpoint_verification"),
-        ENABLED("enabled"),
-        OPTIONAL("optional"),
-        MAX_CERTIFICATE_VALIDITY_PERIOD("max_certificate_validity_period"),
-        CERTIFICATE_VALIDITY_WARN_THRESHOLD("certificate_validity_warn_threshold");
-
-        final String keyName;
-
-        ConfigKey(String keyName)
-        {
-            this.keyName = keyName;
-        }
-
-        public String toString()
-        {
-            return keyName;
-        }
-
-        static Set<String> asSet()
-        {
-            Set<String> valueSet = new HashSet<>();
-            ConfigKey[] values = values();
-            for (ConfigKey key : values)
-            {
-                valueSet.add(toLowerCaseLocalized(key.toString()));
-            }
-            return valueSet;
-        }
-    }
 
     public EncryptionOptions()
     {
@@ -251,7 +213,7 @@ public class EncryptionOptions
         this.certificate_validity_warn_threshold = certificate_validity_warn_threshold;
     }
 
-    public EncryptionOptions(EncryptionOptions options)
+    public EncryptionOptions(EncryptionOptions<T> options)
     {
         ssl_context_factory = options.ssl_context_factory;
         keystore = options.keystore;
@@ -279,7 +241,7 @@ public class EncryptionOptions
      *
      * It also initializes the ISslContextFactory's instance
      */
-    public EncryptionOptions applyConfig()
+    public T applyConfig()
     {
         ensureConfigNotApplied();
 
@@ -303,7 +265,7 @@ public class EncryptionOptions
             // Otherwise if there's no keystore, not possible to establish an optional secure connection
             isOptional = false;
         }
-        return this;
+        return (T) this;
     }
 
     /**
@@ -311,22 +273,22 @@ public class EncryptionOptions
      * as the constructor for its implementation.
      *
      * @throws IllegalArgumentException in case any pre-defined key, as per {@link ConfigKey}, for the encryption
-     * options is duplicated in the parameterized keys.
+     *                                  options is duplicated in the parameterized keys.
      */
-    private void prepareSslContextFactoryParameterizedKeys(Map<String,Object> sslContextFactoryParameters)
+    private void prepareSslContextFactoryParameterizedKeys(Map<String, Object> sslContextFactoryParameters)
     {
         if (ssl_context_factory.parameters != null)
         {
             Set<String> configKeys = ConfigKey.asSet();
             for (Map.Entry<String, String> entry : ssl_context_factory.parameters.entrySet())
             {
-                if(configKeys.contains(toLowerCaseLocalized(entry.getKey())))
+                if (configKeys.contains(toLowerCaseLocalized(entry.getKey())))
                 {
-                    throw new IllegalArgumentException("SslContextFactory "+ssl_context_factory.class_name+" should " +
-                                                       "configure '"+entry.getKey()+"' as encryption_options instead of" +
+                    throw new IllegalArgumentException("SslContextFactory " + ssl_context_factory.class_name + " should " +
+                                                       "configure '" + entry.getKey() + "' as encryption_options instead of" +
                                                        " parameterized keys");
                 }
-                sslContextFactoryParameters.put(entry.getKey(),entry.getValue());
+                sslContextFactoryParameters.put(entry.getKey(), entry.getValue());
             }
         }
     }
@@ -374,7 +336,8 @@ public class EncryptionOptions
 
     protected static void putSslContextFactoryParameter(Map<String, Object> existingParameters, ConfigKey configKey, Object value)
     {
-        if (value != null) {
+        if (value != null)
+        {
             existingParameters.put(configKey.toString(), value);
         }
     }
@@ -479,9 +442,9 @@ public class EncryptionOptions
         return sslContextFactoryInstance == null ? null : sslContextFactoryInstance.getAcceptedProtocols();
     }
 
-    public ClientAuth getClientAuth()
+    public ClientEncryptionOptions.ClientAuth getClientAuth()
     {
-        return this.require_client_auth == null ? ClientAuth.NOT_REQUIRED : ClientAuth.from(this.require_client_auth);
+        return this.require_client_auth == null ? ClientEncryptionOptions.ClientAuth.NOT_REQUIRED : ClientEncryptionOptions.ClientAuth.from(this.require_client_auth);
     }
 
     public String[] acceptedProtocolsArray()
@@ -516,182 +479,6 @@ public class EncryptionOptions
         }
     }
 
-    public static class Builder
-    {
-        private ParameterizedClass ssl_context_factory;
-        private String keystore;
-        private String keystore_password;
-        private String keystore_password_file;
-        private String truststore;
-        private String truststore_password;
-        private String truststore_password_file;
-        private List<String> cipher_suites;
-        private String protocol;
-        private List<String> accepted_protocols;
-        private String algorithm;
-        private String store_type;
-        private String require_client_auth;
-        private boolean require_endpoint_verification;
-        private DurationSpec.IntMinutesBound max_certificate_validity_period;
-        private DurationSpec.IntMinutesBound certificate_validity_warn_threshold;
-        private Boolean enabled;
-        private Boolean optional;
-        private Boolean isEnabled;
-        private Boolean isOptional;
-
-        private EncryptionOptions encryptionOptions;
-
-        public Builder()
-        {
-            this(new EncryptionOptions());
-        }
-
-        public Builder(EncryptionOptions options)
-        {
-            ssl_context_factory = options.ssl_context_factory;
-            keystore = options.keystore;
-            keystore_password = options.keystore_password;
-            keystore_password_file = options.keystore_password_file;
-            truststore = options.truststore;
-            truststore_password = options.truststore_password;
-            truststore_password_file = options.truststore_password_file;
-            cipher_suites = options.cipher_suites;
-            protocol = options.protocol;
-            accepted_protocols = options.accepted_protocols;
-            algorithm = options.algorithm;
-            store_type = options.store_type;
-            require_client_auth = options.require_client_auth;
-            require_endpoint_verification = options.require_endpoint_verification;
-            enabled = options.enabled;
-            optional = options.optional;
-            max_certificate_validity_period = options.max_certificate_validity_period;
-            certificate_validity_warn_threshold = options.certificate_validity_warn_threshold;
-        }
-
-        public Builder withSslContextFactory(ParameterizedClass sslContextFactoryClass)
-        {
-            this.ssl_context_factory = sslContextFactoryClass;
-            return this;
-        }
-
-        public Builder withKeyStore(String keystore)
-        {
-            this.keystore = keystore;
-            return this;
-        }
-
-        public Builder withKeyStorePassword(String keystore_password)
-        {
-            this.keystore_password = keystore_password;
-            return this;
-        }
-
-        public Builder withKeyStorePasswordFile(String keystore_password_file)
-        {
-            this.keystore_password_file = keystore_password_file;
-            return this;
-        }
-
-        public Builder withTrustStore(String truststore)
-        {
-            this.truststore = truststore;
-            return this;
-        }
-
-        public Builder withTrustStorePassword(String truststore_password)
-        {
-            this.truststore_password = truststore_password;
-            return this;
-        }
-
-        public Builder withTrustStorePasswordFile(String truststore_password_file)
-        {
-            this.truststore_password_file = truststore_password_file;
-            return this;
-        }
-
-        public Builder withCipherSuites(List<String> cipher_suites)
-        {
-            this.cipher_suites = cipher_suites;
-            return this;
-        }
-
-        public Builder withCipherSuites(String... cipher_suites)
-        {
-            this.cipher_suites = ImmutableList.copyOf(cipher_suites);
-            return this;
-        }
-
-        public Builder withProtocol(String protocol)
-        {
-            this.protocol = protocol;
-            return this;
-        }
-
-        public Builder withAcceptedProtocols(List<String> accepted_protocols)
-        {
-            this.accepted_protocols = accepted_protocols == null ? null :
-                                      ImmutableList.copyOf(accepted_protocols);
-            return this;
-        }
-
-        public Builder withAlgorithm(String algorithm)
-        {
-            this.algorithm = algorithm;
-            return this;
-        }
-
-        public Builder withStoreType(String store_type)
-        {
-            this.store_type = store_type;
-            return this;
-        }
-
-        public Builder withRequireClientAuth(ClientAuth require_client_auth)
-        {
-            this.require_client_auth = require_client_auth.value;
-            return this;
-        }
-
-        public Builder withRequireEndpointVerification(boolean require_endpoint_verification)
-        {
-            this.require_endpoint_verification = require_endpoint_verification;
-            return this;
-        }
-
-        public Builder withEnabled(boolean enabled)
-        {
-            this.enabled = enabled;
-            return this;
-        }
-
-        public Builder withOptional(Boolean optional)
-        {
-            this.optional = optional;
-            return this;
-        }
-
-        public Builder withMaxCertificateValidityPeriod(DurationSpec.IntMinutesBound maxCertificateValidityPeriod)
-        {
-            this.max_certificate_validity_period = maxCertificateValidityPeriod;
-            return this;
-        }
-
-        public Builder withCertificateValidityWarnThreshold(DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
-        {
-            this.certificate_validity_warn_threshold = certificateValidityWarnThreshold;
-            return this;
-        }
-
-        public EncryptionOptions build()
-        {
-            return new EncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
-                                         truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
-                                         store_type, require_client_auth, require_endpoint_verification, enabled,
-                                         optional, max_certificate_validity_period, certificate_validity_warn_threshold).applyConfig();
-        }
-    }
-
     /**
      * The method is being mainly used to cache SslContexts therefore, we only consider
      * fields that would make a difference when the TrustStore or KeyStore files are updated
@@ -704,7 +491,7 @@ public class EncryptionOptions
         if (o == null || getClass() != o.getClass())
             return false;
 
-        EncryptionOptions opt = (EncryptionOptions)o;
+        EncryptionOptions opt = (EncryptionOptions) o;
         return enabled == opt.enabled &&
                optional == opt.optional &&
                require_client_auth.equals(opt.require_client_auth) &&
@@ -750,8 +537,253 @@ public class EncryptionOptions
         return result;
     }
 
-    public static class ServerEncryptionOptions extends EncryptionOptions
+    public static abstract class Builder<T extends EncryptionOptions<T>>
     {
+        ParameterizedClass ssl_context_factory;
+        String keystore;
+        String keystore_password;
+        String keystore_password_file;
+        String truststore;
+        String truststore_password;
+        String truststore_password_file;
+        List<String> cipher_suites;
+        String protocol;
+        List<String> accepted_protocols;
+        String algorithm;
+        String store_type;
+        String require_client_auth;
+        boolean require_endpoint_verification;
+        DurationSpec.IntMinutesBound max_certificate_validity_period;
+        DurationSpec.IntMinutesBound certificate_validity_warn_threshold;
+        Boolean enabled;
+        Boolean optional;
+        Boolean isEnabled;
+        Boolean isOptional;
+
+        public Builder(EncryptionOptions<T> options)
+        {
+            ssl_context_factory = options.ssl_context_factory;
+            keystore = options.keystore;
+            keystore_password = options.keystore_password;
+            keystore_password_file = options.keystore_password_file;
+            truststore = options.truststore;
+            truststore_password = options.truststore_password;
+            truststore_password_file = options.truststore_password_file;
+            cipher_suites = options.cipher_suites;
+            protocol = options.protocol;
+            accepted_protocols = options.accepted_protocols;
+            algorithm = options.algorithm;
+            store_type = options.store_type;
+            require_client_auth = options.require_client_auth;
+            require_endpoint_verification = options.require_endpoint_verification;
+            enabled = options.enabled;
+            optional = options.optional;
+            max_certificate_validity_period = options.max_certificate_validity_period;
+            certificate_validity_warn_threshold = options.certificate_validity_warn_threshold;
+        }
+
+        public Builder<T> withSslContextFactory(ParameterizedClass sslContextFactoryClass)
+        {
+            this.ssl_context_factory = sslContextFactoryClass;
+            return this;
+        }
+
+        public Builder<T> withKeyStore(String keystore)
+        {
+            this.keystore = keystore;
+            return this;
+        }
+
+        public Builder<T> withKeyStorePassword(String keystore_password)
+        {
+            this.keystore_password = keystore_password;
+            return this;
+        }
+
+        public Builder<T> withKeyStorePasswordFile(String keystore_password_file)
+        {
+            this.keystore_password_file = keystore_password_file;
+            return this;
+        }
+
+        public Builder<T> withTrustStore(String truststore)
+        {
+            this.truststore = truststore;
+            return this;
+        }
+
+        public Builder<T> withTrustStorePassword(String truststore_password)
+        {
+            this.truststore_password = truststore_password;
+            return this;
+        }
+
+        public Builder<T> withTrustStorePasswordFile(String truststore_password_file)
+        {
+            this.truststore_password_file = truststore_password_file;
+            return this;
+        }
+
+        public Builder<T> withCipherSuites(List<String> cipher_suites)
+        {
+            this.cipher_suites = cipher_suites;
+            return this;
+        }
+
+        public Builder<T> withCipherSuites(String... cipher_suites)
+        {
+            this.cipher_suites = ImmutableList.copyOf(cipher_suites);
+            return this;
+        }
+
+        public Builder<T> withProtocol(String protocol)
+        {
+            this.protocol = protocol;
+            return this;
+        }
+
+        public Builder<T> withAcceptedProtocols(List<String> accepted_protocols)
+        {
+            this.accepted_protocols = accepted_protocols == null ? null :
+                                      ImmutableList.copyOf(accepted_protocols);
+            return this;
+        }
+
+        public Builder<T> withAlgorithm(String algorithm)
+        {
+            this.algorithm = algorithm;
+            return this;
+        }
+
+        public Builder<T> withStoreType(String store_type)
+        {
+            this.store_type = store_type;
+            return this;
+        }
+
+        public Builder<T> withRequireClientAuth(ClientEncryptionOptions.ClientAuth require_client_auth)
+        {
+            this.require_client_auth = require_client_auth.value;
+            return this;
+        }
+
+        public Builder<T> withRequireEndpointVerification(boolean require_endpoint_verification)
+        {
+            this.require_endpoint_verification = require_endpoint_verification;
+            return this;
+        }
+
+        public Builder<T> withEnabled(boolean enabled)
+        {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder<T> withOptional(Boolean optional)
+        {
+            this.optional = optional;
+            return this;
+        }
+
+        public Builder<T> withMaxCertificateValidityPeriod(DurationSpec.IntMinutesBound maxCertificateValidityPeriod)
+        {
+            this.max_certificate_validity_period = maxCertificateValidityPeriod;
+            return this;
+        }
+
+        public Builder<T> withCertificateValidityWarnThreshold(DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
+        {
+            this.certificate_validity_warn_threshold = certificateValidityWarnThreshold;
+            return this;
+        }
+
+        public abstract T build();
+    }
+
+    public static class ClientEncryptionOptions extends EncryptionOptions<ClientEncryptionOptions>
+    {
+        public ClientEncryptionOptions()
+        {
+        }
+
+        public ClientEncryptionOptions(ParameterizedClass ssl_context_factory,
+                                       String keystore, String keystore_password, String keystore_password_file,
+                                       String truststore, String truststore_password, String truststore_password_file,
+                                       List<String> cipher_suites, String protocol, List<String> accepted_protocols,
+                                       String algorithm, String store_type, String require_client_auth,
+                                       boolean require_endpoint_verification, Boolean enabled, Boolean optional,
+                                       DurationSpec.IntMinutesBound max_certificate_validity_period,
+                                       DurationSpec.IntMinutesBound certificate_validity_warn_threshold)
+        {
+            super(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore, truststore_password,
+                  truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm, store_type, require_client_auth,
+                  require_endpoint_verification, enabled, optional, max_certificate_validity_period, certificate_validity_warn_threshold);
+        }
+
+        public enum ClientAuth
+        {
+            REQUIRED("true"),
+            NOT_REQUIRED("false"),
+            OPTIONAL("optional");
+            private final String value;
+            private static final Map<String, ClientAuth> VALUES = new HashMap<>();
+
+            static
+            {
+                for (ClientAuth clientAuth : ClientAuth.values())
+                {
+                    VALUES.put(clientAuth.value, clientAuth);
+                    VALUES.put(toLowerCaseLocalized(clientAuth.name()), clientAuth);
+                }
+            }
+
+            ClientAuth(String value)
+            {
+                this.value = value;
+            }
+
+            public static ClientAuth from(String value)
+            {
+                if (VALUES.containsKey(toLowerCaseLocalized(value)))
+                {
+                    return VALUES.get(toLowerCaseLocalized(value));
+                }
+                throw new ConfigurationException(value + " is not a valid ClientAuth option");
+            }
+
+            public String value()
+            {
+                return value;
+            }
+        }
+
+        public static class Builder extends EncryptionOptions.Builder<ClientEncryptionOptions>
+        {
+            public Builder()
+            {
+                this(new ClientEncryptionOptions());
+            }
+
+            public Builder(ClientEncryptionOptions options)
+            {
+                super(options);
+            }
+
+            @Override
+            public ClientEncryptionOptions build()
+            {
+                return new ClientEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file, truststore,
+                                                   truststore_password, truststore_password_file, cipher_suites, protocol, accepted_protocols, algorithm,
+                                                   store_type, require_client_auth, require_endpoint_verification, enabled,
+                                                   optional, max_certificate_validity_period, certificate_validity_warn_threshold).applyConfig();
+            }
+        }
+    }
+
+    public static class ServerEncryptionOptions extends EncryptionOptions<ServerEncryptionOptions>
+    {
+        private static final Logger logger = LoggerFactory.getLogger(ServerEncryptionOptions.class);
+
         public enum InternodeEncryption
         {
             all, none, dc, rack
@@ -781,7 +813,7 @@ public class EncryptionOptions
                                        String truststore, String truststore_password, String truststore_password_file,
                                        List<String> cipher_suites, String protocol, List<String> accepted_protocols,
                                        String algorithm, String store_type, String require_client_auth,
-                                       boolean require_endpoint_verification, Boolean optional,
+                                       boolean require_endpoint_verification, Boolean enabled, Boolean optional,
                                        InternodeEncryption internode_encryption, boolean legacy_ssl_storage_port_enabled,
                                        DurationSpec.IntMinutesBound maxCertificateAgeMinutes,
                                        DurationSpec.IntMinutesBound certificateValidityWarnThreshold)
@@ -789,7 +821,7 @@ public class EncryptionOptions
             super(sslContextFactoryClass, keystore, keystore_password, keystore_password_file,
                   truststore, truststore_password, truststore_password_file, cipher_suites,
                   protocol, accepted_protocols, algorithm, store_type, require_client_auth, require_endpoint_verification,
-                  null, optional, maxCertificateAgeMinutes, certificateValidityWarnThreshold);
+                  enabled, optional, maxCertificateAgeMinutes, certificateValidityWarnThreshold);
             this.internode_encryption = internode_encryption;
             this.legacy_ssl_storage_port_enabled = legacy_ssl_storage_port_enabled;
             this.outbound_keystore = outbound_keystore;
@@ -807,7 +839,7 @@ public class EncryptionOptions
             this.outbound_keystore_password_file = options.outbound_keystore_password_file;
         }
 
-        public static class Builder extends EncryptionOptions.Builder
+        public static class Builder extends EncryptionOptions.Builder<ServerEncryptionOptions>
         {
             private InternodeEncryption internode_encryption;
             private boolean legacy_ssl_storage_port_enabled;
@@ -828,108 +860,6 @@ public class EncryptionOptions
                 this.outbound_keystore = options.outbound_keystore;
                 this.outbound_keystore_password = options.outbound_keystore_password;
                 this.outbound_keystore_password_file = options.outbound_keystore_password_file;
-            }
-
-            public Builder withSslContextFactory(ParameterizedClass sslContextFactoryClass)
-            {
-                super.withSslContextFactory(sslContextFactoryClass);
-                return this;
-            }
-
-            public Builder withKeyStore(String keystore)
-            {
-                super.withKeyStore(keystore);
-                return this;
-            }
-
-            public Builder withKeyStorePassword(String keystore_password)
-            {
-                super.withKeyStorePassword(keystore_password);
-                return this;
-            }
-
-            public Builder withKeyStorePasswordFile(String keystore_password_file)
-            {
-                super.withKeyStorePasswordFile(keystore_password_file);
-                return this;
-            }
-
-            public Builder withTrustStore(String truststore)
-            {
-                super.withTrustStore(truststore);
-                return this;
-            }
-
-            public Builder withTrustStorePassword(String truststore_password)
-            {
-                super.withTrustStorePassword(truststore_password);
-                return this;
-            }
-
-            public Builder withTrustStorePasswordFile(String truststore_password_file)
-            {
-                super.withTrustStorePasswordFile(truststore_password_file);
-                return this;
-            }
-
-            public Builder withCipherSuites(List<String> cipher_suites)
-            {
-                super.withCipherSuites(cipher_suites);
-                return this;
-            }
-
-            public Builder withCipherSuites(String... cipher_suites)
-            {
-                super.withCipherSuites(cipher_suites);
-                return this;
-            }
-
-            public Builder withProtocol(String protocol)
-            {
-                super.withProtocol(protocol);
-                return this;
-            }
-
-            public Builder withAcceptedProtocols(List<String> accepted_protocols)
-            {
-                super.withAcceptedProtocols(accepted_protocols);
-                return this;
-            }
-
-            public Builder withAlgorithm(String algorithm)
-            {
-                super.withAlgorithm(algorithm);
-                return this;
-            }
-
-            public Builder withStoreType(String store_type)
-            {
-                super.withStoreType(store_type);
-                return this;
-            }
-
-            public Builder withRequireClientAuth(ClientAuth require_client_auth)
-            {
-                super.withRequireClientAuth(require_client_auth);
-                return this;
-            }
-
-            public Builder withRequireEndpointVerification(boolean require_endpoint_verification)
-            {
-                super.withRequireEndpointVerification(require_endpoint_verification);
-                return this;
-            }
-
-            public Builder withEnabled(boolean enabled)
-            {
-                super.withEnabled(enabled);
-                return this;
-            }
-
-            public Builder withOptional(Boolean optional)
-            {
-                super.withOptional(optional);
-                return this;
             }
 
             public Builder withInternodeEncryption(InternodeEncryption internode_encryption)
@@ -962,16 +892,17 @@ public class EncryptionOptions
                 return this;
             }
 
+            @Override
             public ServerEncryptionOptions build()
             {
-                return new ServerEncryptionOptions(super.ssl_context_factory, super.keystore, super.keystore_password, super.keystore_password_file,
+                return new ServerEncryptionOptions(ssl_context_factory, keystore, keystore_password, keystore_password_file,
                                                    outbound_keystore, outbound_keystore_password, outbound_keystore_password_file,
-                                                   super.truststore, super.truststore_password, super.truststore_password_file,
-                                                   super.cipher_suites, super.protocol, super.accepted_protocols,
-                                                   super.algorithm, super.store_type, super.require_client_auth,
-                                                   super.require_endpoint_verification, super.optional, internode_encryption,
-                                                   legacy_ssl_storage_port_enabled, super.max_certificate_validity_period,
-                                                   super.certificate_validity_warn_threshold).applyConfigInternal();
+                                                   truststore, truststore_password, truststore_password_file,
+                                                   cipher_suites, protocol, accepted_protocols,
+                                                   algorithm, store_type, require_client_auth,
+                                                   require_endpoint_verification, enabled, optional, internode_encryption,
+                                                   legacy_ssl_storage_port_enabled, max_certificate_validity_period,
+                                                   certificate_validity_warn_threshold).applyConfig();
             }
         }
 
@@ -985,7 +916,7 @@ public class EncryptionOptions
         }
 
         @Override
-        public EncryptionOptions applyConfig()
+        public ServerEncryptionOptions applyConfig()
         {
             return applyConfigInternal();
         }
@@ -1001,13 +932,13 @@ public class EncryptionOptions
                 logger.warn("Setting server_encryption_options.enabled has no effect, use internode_encryption");
             }
 
-            if (getClientAuth() != ClientAuth.NOT_REQUIRED && (internode_encryption == InternodeEncryption.rack || internode_encryption == InternodeEncryption.dc))
+            if (getClientAuth() != ClientEncryptionOptions.ClientAuth.NOT_REQUIRED && (internode_encryption == InternodeEncryption.rack || internode_encryption == InternodeEncryption.dc))
             {
                 logger.warn("Setting require_client_auth is incompatible with 'rack' and 'dc' internode_encryption values."
-                          + " It is possible for an internode connection to pretend to be in the same rack/dc by spoofing"
-                          + " its broadcast address in the handshake and bypass authentication. To ensure that mutual TLS"
-                          + " authentication is not bypassed, please set internode_encryption to 'all'. Continuing with"
-                          + " insecure configuration.");
+                            + " It is possible for an internode connection to pretend to be in the same rack/dc by spoofing"
+                            + " its broadcast address in the handshake and bypass authentication. To ensure that mutual TLS"
+                            + " authentication is not bypassed, please set internode_encryption to 'all'. Continuing with"
+                            + " insecure configuration.");
             }
 
             // regardless of the optional flag, if the internode encryption is set to rack or dc

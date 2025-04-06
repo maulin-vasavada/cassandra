@@ -27,8 +27,8 @@ import org.apache.cassandra.security.DefaultSslContextFactory;
 import org.apache.cassandra.security.DummySslContextFactoryImpl;
 import org.apache.cassandra.transport.TlsTestUtils;
 
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.NOT_REQUIRED;
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.REQUIRED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -42,13 +42,13 @@ public class EncryptionOptionsEqualityTest
     {
         EncryptionOptions.ServerEncryptionOptions.Builder serverEncryptionOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder();
         return serverEncryptionOptionsBuilder
+               .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
+               .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
                .withStoreType("JKS")
                .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
                .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
                .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
                .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
-               .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
-               .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
                .withProtocol("TLSv1.1")
                .withRequireClientAuth(REQUIRED)
                .withRequireEndpointVerification(false)
@@ -57,8 +57,8 @@ public class EncryptionOptionsEqualityTest
 
     @Test
     public void testKeystoreOptions() {
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ServerEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ServerEncryptionOptions.Builder()
         .withStoreType("JKS")
         .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
         .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
@@ -69,8 +69,8 @@ public class EncryptionOptionsEqualityTest
         .withRequireEndpointVerification(false)
         .build();
 
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ServerEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ServerEncryptionOptions.Builder()
         .withStoreType("JKS")
         .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
         .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
@@ -87,8 +87,8 @@ public class EncryptionOptionsEqualityTest
 
     @Test
     public void testKeystoreOptionsWithPasswordFile() {
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ServerEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ServerEncryptionOptions.Builder()
         .withStoreType("JKS")
         .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
         .withKeyStorePasswordFile(TlsTestUtils.SERVER_KEYSTORE_PASSWORD_FILE)
@@ -99,8 +99,8 @@ public class EncryptionOptionsEqualityTest
         .withRequireEndpointVerification(false)
         .build();
 
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ServerEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ServerEncryptionOptions.Builder()
         .withStoreType("JKS")
         .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
         .withKeyStorePasswordFile(TlsTestUtils.SERVER_KEYSTORE_PASSWORD_FILE)
@@ -143,8 +143,8 @@ public class EncryptionOptionsEqualityTest
         Map<String,String> parameters1 = new HashMap<>();
         parameters1.put("key1", "value1");
         parameters1.put("key2", "value2");
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters1))
         .withProtocol("TLSv1.1")
         .withRequireClientAuth(REQUIRED)
@@ -154,8 +154,8 @@ public class EncryptionOptionsEqualityTest
         Map<String,String> parameters2 = new HashMap<>();
         parameters2.put("key1", "value1");
         parameters2.put("key2", "value2");
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters2))
         .withProtocol("TLSv1.1")
         .withRequireClientAuth(REQUIRED)
@@ -172,8 +172,8 @@ public class EncryptionOptionsEqualityTest
         Map<String,String> parameters1 = new HashMap<>();
         parameters1.put("key1", "value1");
         parameters1.put("key2", "value2");
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters1))
         .withProtocol("TLSv1.1")
         .withRequireClientAuth(NOT_REQUIRED)
@@ -183,8 +183,8 @@ public class EncryptionOptionsEqualityTest
         Map<String,String> parameters2 = new HashMap<>();
         parameters2.put("key1", "value1");
         parameters2.put("key2", "value2");
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DefaultSslContextFactory.class.getName(), parameters2))
         .withProtocol("TLSv1.1")
         .withRequireClientAuth(NOT_REQUIRED)
@@ -201,8 +201,8 @@ public class EncryptionOptionsEqualityTest
         Map<String,String> parameters1 = new HashMap<>();
         parameters1.put("key1", "value11");
         parameters1.put("key2", "value12");
-        EncryptionOptions encryptionOptions1 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions1 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters1))
         .withProtocol("TLSv1.1")
         .build();
@@ -210,8 +210,8 @@ public class EncryptionOptionsEqualityTest
         Map<String,String> parameters2 = new HashMap<>();
         parameters2.put("key1", "value21");
         parameters2.put("key2", "value22");
-        EncryptionOptions encryptionOptions2 =
-        new EncryptionOptions.Builder()
+        EncryptionOptions.ClientEncryptionOptions encryptionOptions2 =
+        new EncryptionOptions.ClientEncryptionOptions.Builder()
         .withSslContextFactory(new ParameterizedClass(DummySslContextFactoryImpl.class.getName(), parameters2))
         .withProtocol("TLSv1.1")
         .build();

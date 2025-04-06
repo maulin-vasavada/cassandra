@@ -73,7 +73,7 @@ import org.apache.cassandra.utils.FBUtilities;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.NOT_REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED;
 import static org.apache.cassandra.net.MessagingService.VERSION_40;
 import static org.apache.cassandra.net.NoPayload.noPayload;
 import static org.apache.cassandra.net.MessagingService.current_version;
@@ -177,11 +177,11 @@ public class ConnectionTest
         }
     }
 
-    static final Builder encryptionOptionsBuilder =
+    static final EncryptionOptions.Builder<EncryptionOptions.ServerEncryptionOptions> encryptionOptionsBuilder =
             new Builder()
             .withLegacySslStoragePort(true)
-            .withOptional(true)
             .withInternodeEncryption(EncryptionOptions.ServerEncryptionOptions.InternodeEncryption.all)
+            .withOptional(true)
             .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
             .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
             .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)

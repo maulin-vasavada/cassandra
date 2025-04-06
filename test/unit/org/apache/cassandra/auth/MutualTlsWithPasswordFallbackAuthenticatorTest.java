@@ -34,7 +34,6 @@ import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.EncryptionOptions;
-import org.apache.cassandra.config.EncryptionOptions.Builder;
 
 import static org.apache.cassandra.auth.AuthTestUtils.getMockInetAddress;
 import static org.junit.Assert.assertNotNull;
@@ -51,10 +50,10 @@ public class MutualTlsWithPasswordFallbackAuthenticatorTest
         DatabaseDescriptor.daemonInitialization();
         SchemaLoader.loadSchema();
         Config config = DatabaseDescriptor.getRawConfig();
-        config.client_encryption_options =
-        new Builder(config.client_encryption_options).withEnabled(true)
-                                                     .withRequireClientAuth(EncryptionOptions.ClientAuth.OPTIONAL)
-                                                     .build();
+        config.client_encryption_options = new EncryptionOptions.ClientEncryptionOptions.Builder(config.client_encryption_options)
+                                           .withEnabled(true)
+                                           .withRequireClientAuth(EncryptionOptions.ClientEncryptionOptions.ClientAuth.OPTIONAL)
+                                           .build();
         Map<String, String> parameters = Collections.singletonMap("validator_class_name", "org.apache.cassandra.auth.SpiffeCertificateValidator");
         fallbackAuthenticator = new MutualTlsWithPasswordFallbackAuthenticator(parameters);
         fallbackAuthenticator.setup();

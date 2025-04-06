@@ -93,7 +93,7 @@ public class IsolatedJmx
 
             // CASSANDRA-18508: Sensitive JMX SSL configuration options can be easily exposed
             Map<String, Object> jmxServerOptionsMap = (Map<String, Object>) config.getParams().get("jmx_server_options");
-            EncryptionOptions jmxEncryptionOptions;
+            EncryptionOptions.ClientEncryptionOptions jmxEncryptionOptions;
             if (jmxServerOptionsMap == null)
             {
                 JMXServerOptions parsingSystemProperties = JMXServerOptions.createParsingSystemProperties();
@@ -165,7 +165,7 @@ public class IsolatedJmx
      * @return EncryptionOptions built object
      */
     @SuppressWarnings("unchecked")
-    private EncryptionOptions getJmxEncryptionOptions(Map<String, Object> jmxServerOptionsMap)
+    private EncryptionOptions.ClientEncryptionOptions getJmxEncryptionOptions(Map<String, Object> jmxServerOptionsMap)
     {
         if (jmxServerOptionsMap == null)
             return null;
@@ -176,7 +176,7 @@ public class IsolatedJmx
         {
             return null;
         }
-        EncryptionOptions.Builder jmxEncryptionOptionsBuilder = new EncryptionOptions.Builder();
+        EncryptionOptions.ClientEncryptionOptions.Builder jmxEncryptionOptionsBuilder = new EncryptionOptions.ClientEncryptionOptions.Builder();
         String[] cipherSuitesArray = (String[]) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.CIPHER_SUITES.toString());
         if (cipherSuitesArray != null)
         {
@@ -189,9 +189,9 @@ public class IsolatedJmx
         }
 
         Boolean requireClientAuthValue = (Boolean) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.REQUIRE_CLIENT_AUTH.toString());
-        EncryptionOptions.ClientAuth requireClientAuth = requireClientAuthValue == null ?
-                                                         EncryptionOptions.ClientAuth.NOT_REQUIRED :
-                                                         EncryptionOptions.ClientAuth.from(String.valueOf(requireClientAuthValue));
+        EncryptionOptions.ClientEncryptionOptions.ClientAuth requireClientAuth = requireClientAuthValue == null ?
+                                                                                 EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED :
+                                                                                 EncryptionOptions.ClientEncryptionOptions.ClientAuth.from(String.valueOf(requireClientAuthValue));
         Object enabledOption = encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.toString());
         boolean enabled = enabledOption != null ? (Boolean) encryptionOptionsMap.get(EncryptionOptions.ConfigKey.ENABLED.toString()) : false;
 

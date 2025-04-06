@@ -52,7 +52,7 @@ import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.tools.BulkLoader.CmdLineOptions;
 
 import static org.apache.cassandra.config.DataRateSpec.DataRateUnit.MEBIBYTES_PER_SECOND;
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.REQUIRED;
 
 public class LoaderOptions
 {
@@ -121,7 +121,7 @@ public class LoaderOptions
     public final int entireSSTableInterDcThrottleMebibytes;
     public final int storagePort;
     public final int sslStoragePort;
-    public final EncryptionOptions clientEncOptions;
+    public final EncryptionOptions.ClientEncryptionOptions clientEncOptions;
     public final int connectionsPerHost;
     public final EncryptionOptions.ServerEncryptionOptions serverEncOptions;
     public final Set<InetSocketAddress> hosts;
@@ -172,8 +172,8 @@ public class LoaderOptions
 
         int storagePort;
         int sslStoragePort;
-        EncryptionOptions clientEncOptions = new EncryptionOptions();
-        EncryptionOptions.Builder clientEncOptionsBuilder = new EncryptionOptions.Builder(clientEncOptions);
+        EncryptionOptions.ClientEncryptionOptions clientEncOptions = new EncryptionOptions.ClientEncryptionOptions();
+        EncryptionOptions.ClientEncryptionOptions.Builder clientEncOptionsBuilder = new EncryptionOptions.ClientEncryptionOptions.Builder(clientEncOptions);
         int connectionsPerHost = 1;
         EncryptionOptions.ServerEncryptionOptions serverEncOptions = new EncryptionOptions.ServerEncryptionOptions();
         EncryptionOptions.ServerEncryptionOptions.Builder serverEncOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder(serverEncOptions);
@@ -335,10 +335,10 @@ public class LoaderOptions
             return this;
         }
 
-        public Builder encOptions(EncryptionOptions encOptions)
+        public Builder encOptions(EncryptionOptions.ClientEncryptionOptions encOptions)
         {
             this.clientEncOptions = encOptions;
-            this.clientEncOptionsBuilder = new EncryptionOptions.Builder(encOptions);
+            this.clientEncOptionsBuilder = new EncryptionOptions.ClientEncryptionOptions.Builder(encOptions);
             return this;
         }
 
@@ -555,7 +555,7 @@ public class LoaderOptions
                                 "which is able to handle encrypted communication too.");
 
                 // Copy the encryption options and apply the config so that argument parsing can accesss isEnabled.
-                clientEncOptionsBuilder = new EncryptionOptions.Builder(config.client_encryption_options);
+                clientEncOptionsBuilder = new EncryptionOptions.ClientEncryptionOptions.Builder(config.client_encryption_options);
                 clientEncOptions = clientEncOptionsBuilder.build();
                 serverEncOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder(config.server_encryption_options);
                 serverEncOptions = serverEncOptionsBuilder.build();

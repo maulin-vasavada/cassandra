@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.config.EncryptionOptions;
-import org.apache.cassandra.config.EncryptionOptions.Builder;
 import org.apache.cassandra.stress.util.ResultLogger;
 
 import static java.lang.String.format;
@@ -45,12 +44,12 @@ public class SettingsTransport implements Serializable
         this.credentials = credentials;
     }
 
-    public EncryptionOptions getEncryptionOptions()
+    public EncryptionOptions.ClientEncryptionOptions getEncryptionOptions()
     {
-        EncryptionOptions encOptions = new EncryptionOptions().applyConfig();
+        EncryptionOptions.ClientEncryptionOptions encOptions = new EncryptionOptions.ClientEncryptionOptions().applyConfig();
         if (options.trustStore.present())
         {
-            Builder encOptionsBuilder = new Builder(encOptions)
+            EncryptionOptions.Builder<EncryptionOptions.ClientEncryptionOptions> encOptionsBuilder = new EncryptionOptions.ClientEncryptionOptions.Builder(encOptions)
                                         .withEnabled(true)
                                         .withTrustStore(options.trustStore.value())
                                         .withTrustStorePassword(options.trustStorePw.setByUser() ? options.trustStorePw.value() : credentials.transportTruststorePassword)

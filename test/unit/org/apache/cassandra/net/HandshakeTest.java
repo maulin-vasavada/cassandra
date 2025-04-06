@@ -50,8 +50,8 @@ import org.apache.cassandra.security.DefaultSslContextFactory;
 import org.apache.cassandra.transport.TlsTestUtils;
 import org.apache.cassandra.utils.concurrent.AsyncPromise;
 
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.NOT_REQUIRED;
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.REQUIRED;
 import static org.apache.cassandra.net.ConnectionType.SMALL_MESSAGES;
 import static org.apache.cassandra.net.MessagingService.current_version;
 import static org.apache.cassandra.net.MessagingService.minimum_version;
@@ -280,15 +280,17 @@ public class HandshakeTest
 
     private ServerEncryptionOptions getServerEncryptionOptions(SslFallbackConnectionType sslConnectionType, boolean optional)
     {
-        Builder serverEncryptionOptionsBuilder = new Builder().withOptional(optional)
-                                                              .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
-                                                              .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                                                              .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
-                                                              .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
-                                                              .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
-                                                              .withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
-                                                              .withSslContextFactory((new ParameterizedClass(DefaultSslContextFactory.class.getName(),
-                                                                                                             new HashMap<>())));
+        Builder serverEncryptionOptionsBuilder = new Builder();
+
+        serverEncryptionOptionsBuilder.withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
+                                      .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
+                                      .withOptional(optional)
+                                      .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
+                                      .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
+                                      .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH).withTrustStorePassword(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD)
+                                      .withSslContextFactory((new ParameterizedClass(DefaultSslContextFactory.class.getName(),
+                                                                                      new HashMap<>())));
+
         if (sslConnectionType == SslFallbackConnectionType.MTLS)
         {
             serverEncryptionOptionsBuilder.withInternodeEncryption(ServerEncryptionOptions.InternodeEncryption.all)

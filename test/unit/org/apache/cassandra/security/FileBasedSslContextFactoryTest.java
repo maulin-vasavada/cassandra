@@ -36,7 +36,7 @@ import org.apache.cassandra.transport.TlsTestUtils;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_CONFIG;
 
-import static org.apache.cassandra.config.EncryptionOptions.ClientAuth.NOT_REQUIRED;
+import static org.apache.cassandra.config.EncryptionOptions.ClientEncryptionOptions.ClientAuth.NOT_REQUIRED;
 
 public class FileBasedSslContextFactoryTest
 {
@@ -63,6 +63,8 @@ public class FileBasedSslContextFactoryTest
     {
         encryptionOptionsBuilder = new EncryptionOptions.ServerEncryptionOptions.Builder();
         encryptionOptions = encryptionOptionsBuilder
+                            .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
+                            .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
                             .withSslContextFactory(new ParameterizedClass(TestFileBasedSSLContextFactory.class.getName(),
                                                                           new HashMap<>()))
                             .withTrustStore(TlsTestUtils.SERVER_TRUSTSTORE_PATH)
@@ -71,8 +73,6 @@ public class FileBasedSslContextFactoryTest
                             .withCipherSuites("TLS_RSA_WITH_AES_128_CBC_SHA")
                             .withKeyStore(TlsTestUtils.SERVER_KEYSTORE_PATH)
                             .withKeyStorePassword(TlsTestUtils.SERVER_KEYSTORE_PASSWORD)
-                            .withOutboundKeystore(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PATH)
-                            .withOutboundKeystorePassword(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD)
                             .build();
     }
 
@@ -99,10 +99,10 @@ public class FileBasedSslContextFactoryTest
     public void testEmptyKeystorePasswords() throws SSLException
     {
         EncryptionOptions.ServerEncryptionOptions localEncryptionOptions = encryptionOptionsBuilder
-                                                                           .withKeyStorePassword("")
-                                                                           .withKeyStore("test/conf/cassandra_ssl_test_nopassword.keystore")
                                                                            .withOutboundKeystorePassword("")
                                                                            .withOutboundKeystore("test/conf/cassandra_ssl_test_nopassword.keystore")
+                                                                           .withKeyStorePassword("")
+                                                                           .withKeyStore("test/conf/cassandra_ssl_test_nopassword.keystore")
                                                                            .build();
 
         Assert.assertEquals("org.apache.cassandra.security.FileBasedSslContextFactoryTest$TestFileBasedSSLContextFactory",
@@ -123,10 +123,10 @@ public class FileBasedSslContextFactoryTest
         // Here we only override password configuration and specify password_file configuration since keystore paths
         // are already loaded in the `encryptionOptions`
         EncryptionOptions.ServerEncryptionOptions localEncryptionOptions = encryptionOptionsBuilder
-                                                                           .withKeyStorePassword(null)
-                                                                           .withKeyStorePasswordFile(TlsTestUtils.SERVER_KEYSTORE_PASSWORD_FILE)
                                                                            .withOutboundKeystorePassword(null)
                                                                            .withOutboundKeystorePasswordFile(TlsTestUtils.SERVER_OUTBOUND_KEYSTORE_PASSWORD_FILE)
+                                                                           .withKeyStorePassword(null)
+                                                                           .withKeyStorePasswordFile(TlsTestUtils.SERVER_KEYSTORE_PASSWORD_FILE)
                                                                            .withTrustStorePassword(null)
                                                                            .withTrustStorePasswordFile(TlsTestUtils.SERVER_TRUSTSTORE_PASSWORD_FILE)
                                                                            .build();
@@ -150,10 +150,10 @@ public class FileBasedSslContextFactoryTest
         // Here we only override password configuration and specify password_file configuration since keystore paths
         // are already loaded in the `encryptionOptions`
         encryptionOptionsBuilder
-        .withKeyStorePassword(null)
-        .withKeyStorePasswordFile("/path/to/non-existance-password-file")
         .withOutboundKeystorePassword(null)
         .withOutboundKeystorePasswordFile("/path/to/non-existance-password-file")
+        .withKeyStorePassword(null)
+        .withKeyStorePasswordFile("/path/to/non-existance-password-file")
         .withTrustStorePassword(null)
         .withTrustStorePasswordFile("/path/to/non-existance-password-file")
         .build();
